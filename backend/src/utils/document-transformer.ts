@@ -65,7 +65,9 @@ export class UniversalDocumentTransformer<
     return documents.map((doc) => this.transform(doc));
   }
 
-  private extractPlainFields(document: TDocument): any {
+  private extractPlainFields(
+    document: TDocument
+  ): Omit<TDto, keyof MongoBaseFields> {
     const plainObject = document.toObject();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { _id, __v, createdAt, updatedAt, ...rest } = plainObject;
