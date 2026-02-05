@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
+import { UserResponseDto } from "@/models/user.response.dto";
+
+const userSchema = new mongoose.Schema<UserResponseDto>(
   {
     email: { type: String, required: true, unique: true },
     fullname: { type: String, required: true },

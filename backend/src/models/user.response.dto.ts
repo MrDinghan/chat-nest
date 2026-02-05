@@ -1,12 +1,6 @@
-import {
-  createAutoTransformer,
-  DocumentType,
-  MongoBaseFields,
-} from "@/utils/document-transformer";
-
 import { IUserDTO } from "./user.dto";
 
-export interface UserResponseDto extends IUserDTO, MongoBaseFields {
+export interface UserResponseDto extends IUserDTO {
   /**
    * MongoDB Object ID
    * @example "507f1f77bcf86cd799439011"
@@ -25,8 +19,3 @@ export interface UserResponseDto extends IUserDTO, MongoBaseFields {
    */
   updatedAt: string;
 }
-
-export const userTransformer = createAutoTransformer<
-  DocumentType<IUserDTO>,
-  UserResponseDto
->();

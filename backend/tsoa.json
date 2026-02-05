@@ -7,10 +7,18 @@
     "specVersion": 3,
     "name": "MERN Product API",
     "description": "API for managing products",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "securityDefinitions": {
+      "jwt": {
+        "type": "apiKey",
+        "name": "token",
+        "in": "cookie"
+      }
+    }
   },
   "routes": {
-    "routesDir": "src/routes"
+    "routesDir": "src/routes",
+    "authenticationModule": "src/middlewares/authentication.ts"
   },
   "compilerOptions": {
     "baseUrl": "./src",

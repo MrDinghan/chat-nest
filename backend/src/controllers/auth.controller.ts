@@ -1,20 +1,24 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { Body, Post, Route, Tags } from "tsoa";
+import { Request as ExpressRequest } from "express";
+import { Body, Get, Post, Put, Request, Route, Security, Tags } from "tsoa";
 
+import cloudinary from "@/lib/cloudinary";
+import { generateToken } from "@/lib/utils";
 import { IUserDTO } from "@/models/user.dto";
 import User from "@/models/user.model";
-import { UserResponseDto, userTransformer } from "@/models/user.response.dto";
+import { UserResponseDto } from "@/models/user.response.dto";
 import { ApiResponse } from "@/types/ApiResponse";
+import { HttpStatus } from "@/types/HttpStatus";
 
 import { BaseController } from "./base-controller";
 
-@Route("auth")
 @Tags("Auth")
+@Route("auth")
 export class AuthController extends BaseController {
   @Post("signup")
   public async signup(
-    @Body() body: IUserDTO
+    @Body() body: IUserDTO,
+    @Request() req: ExpressRequest,
   ): Promise<ApiResponse<UserResponseDto>> {
     const { email, fullname, password, profilePic } = body;
     if (password.length < 6) {
@@ -37,24 +41,71 @@ export class AuthController extends BaseController {
     if (!newUser) {
       return this.fail("Failed to create user");
     }
-    const token = jwt.sign(
-      { userId: newUser._id },
-      process.env.JWT_SECRET || "secret",
-      {
-        expiresIn: "7d",
-      }
-    );
-    this.setHeader(
-      "Set-Cookie",
-      `token=${token}; HttpOnly; Path=/; Max-Age=${
-        7 * 24 * 60 * 60
-      }; SameSite=Strict; Secure=${process.env.NODE_ENV === "production"}`
-    );
+    const token = generateToken(newUser._id);
+    if (req.res) {
+      this.setTokenCookie(req.res, token);
+    }
     await newUser.save();
-    return this.successWithTransformOne(
-      newUser,
-      userTransformer,
-      "Signup successful"
+    return this.success(newUser.toObject(), undefined, HttpStatus.CREATED);
+  }
+
+  @Post("login")
+  public async login(
+    @Body() body: Pick<IUserDTO, "email" | "password">,
+    @Request() req: ExpressRequest,
+  ): Promise<ApiResponse<UserResponseDto>> {
+    const { email, password } = body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return this.fail("User not found");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return this.fail("Invalid password");
+    }
+    const token = generateToken(user._id);
+    if (req.res) {
+      this.setTokenCookie(req.res, token);
+    }
+    return this.success(user.toObject());
+  }
+
+  @Post("logout")
+  public async logout(
+    @Request() req: ExpressRequest,
+  ): Promise<ApiResponse<null>> {
+    if (req.res) {
+      req.res.cookie("token", "", { maxAge: 0 });
+    }
+    return this.success(null);
+  }
+
+  @Security("jwt")
+  @Put("updateProfile")
+  public async updateProfile(
+    @Body() body: Partial<IUserDTO>,
+    @Request() req: ExpressRequest,
+  ): Promise<ApiResponse<UserResponseDto>> {
+    const currentUser = req.user!;
+    const userId = currentUser._id;
+    const { profilePic } = body;
+
+    if (!profilePic) {
+      return this.fail("Profile pic is required", HttpStatus.BAD_REQUEST);
+    }
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: uploadResponse.secure_url },
+      { new: true },
     );
+    return this.success(updatedUser!.toObject());
+  }
+
+  @Security("jwt")
+  @Get("checkAuth")
+  public async checkAuth(@Request() req: ExpressRequest) {
+    return this.success(req.user);
   }
 }
