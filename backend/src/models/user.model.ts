@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-import { UserResponseDto } from "@/models/user.response.dto";
+import { UserResponseDto } from "./user.response.dto";
 
 const userSchema = new mongoose.Schema<UserResponseDto>(
   {
@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema<UserResponseDto>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const User = mongoose.model("User", userSchema);

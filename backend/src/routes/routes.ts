@@ -4,6 +4,8 @@
 import type { TsoaRoute } from '@tsoa/runtime';
 import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { MessageController } from './../controllers/message.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { AuthController } from './../controllers/auth.controller';
 import { expressAuthentication } from './../middlewares/authentication';
 // @ts-ignore - no great way to install types from subpackage
@@ -27,6 +29,60 @@ const models: TsoaRoute.Models = {
             "updatedAt": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_UserResponseDto-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "code": {"dataType":"double","required":true},
+            "message": {"dataType":"string","required":true},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"UserResponseDto"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "mongoose.Types.ObjectId": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "MessageResponseDto": {
+        "dataType": "refObject",
+        "properties": {
+            "text": {"dataType":"string"},
+            "image": {"dataType":"string"},
+            "senderId": {"ref":"mongoose.Types.ObjectId","required":true},
+            "receiverId": {"ref":"mongoose.Types.ObjectId","required":true},
+            "_id": {"dataType":"string","required":true},
+            "createdAt": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_MessageResponseDto-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "code": {"dataType":"double","required":true},
+            "message": {"dataType":"string","required":true},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"MessageResponseDto"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_MessageResponseDto_": {
+        "dataType": "refObject",
+        "properties": {
+            "code": {"dataType":"double","required":true},
+            "message": {"dataType":"string","required":true},
+            "data": {"ref":"MessageResponseDto","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial_IMessageDTO_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"text":{"dataType":"string"},"image":{"dataType":"string"},"senderId":{"ref":"mongoose.Types.ObjectId"},"receiverId":{"ref":"mongoose.Types.ObjectId"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ApiResponse_UserResponseDto_": {
@@ -92,6 +148,100 @@ export function RegisterRoutes(app: Router) {
 
 
     
+        const argsMessageController_getUsersList: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/message/getUsersListWithoutCurrentUser',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MessageController)),
+            ...(fetchMiddlewares<RequestHandler>(MessageController.prototype.getUsersList)),
+
+            async function MessageController_getUsersList(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMessageController_getUsersList, request, response });
+
+                const controller = new MessageController();
+
+              await templateService.apiHandler({
+                methodName: 'getUsersList',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMessageController_getMessages: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/message/getMessages/:id',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MessageController)),
+            ...(fetchMiddlewares<RequestHandler>(MessageController.prototype.getMessages)),
+
+            async function MessageController_getMessages(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMessageController_getMessages, request, response });
+
+                const controller = new MessageController();
+
+              await templateService.apiHandler({
+                methodName: 'getMessages',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMessageController_postMessage: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"Partial_IMessageDTO_"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/message/postMessage/:id',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MessageController)),
+            ...(fetchMiddlewares<RequestHandler>(MessageController.prototype.postMessage)),
+
+            async function MessageController_postMessage(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMessageController_postMessage, request, response });
+
+                const controller = new MessageController();
+
+              await templateService.apiHandler({
+                methodName: 'postMessage',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAuthController_signup: Record<string, TsoaRoute.ParameterSchema> = {
                 body: {"in":"body","name":"body","required":true,"ref":"IUserDTO"},
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
