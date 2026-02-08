@@ -9,12 +9,14 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import routes from "~react-pages";
 
 import Navbar from "./components/Navbar";
+import { useThemeStore } from "./stores/useThemeStore";
 
 function App() {
   const pages = useRoutes(routes);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { setAuthUser } = useAuthStore();
+  const { theme } = useThemeStore();
 
   const isAuthPage = ["/login", "/signup"].includes(pathname);
   const { data: authUser, isLoading: isAuthLoading } = useCheckAuth({
@@ -40,11 +42,11 @@ function App() {
     );
 
   return (
-    <>
+    <div data-theme={theme}>
       <Toaster />
       <Navbar />
       {pages}
-    </>
+    </div>
   );
 }
 
