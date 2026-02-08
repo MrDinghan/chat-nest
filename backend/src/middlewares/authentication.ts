@@ -3,9 +3,23 @@ import jwt from "jsonwebtoken";
 
 import User from "@/models/user.model";
 import { UserResponseDto } from "@/models/user.response.dto";
+import { HttpStatus } from "@/types/HttpStatus";
 
 interface JwtPayload {
   userId: string;
+}
+
+export class AuthenticationError extends Error {
+  code: number;
+  message: string;
+  data: null;
+
+  constructor(message: string) {
+    super(message);
+    this.code = HttpStatus.UNAUTHORIZED;
+    this.message = message;
+    this.data = null;
+  }
 }
 
 export async function expressAuthentication(
@@ -16,7 +30,7 @@ export async function expressAuthentication(
     const token = request.cookies?.token;
 
     if (!token) {
-      return Promise.reject(new Error("No token provided"));
+      return Promise.reject(new AuthenticationError("No token provided"));
     }
 
     try {
@@ -28,13 +42,13 @@ export async function expressAuthentication(
       const user = await User.findById(decoded.userId).select("-password");
 
       if (!user) {
-        return Promise.reject(new Error("User not found"));
+        return Promise.reject(new AuthenticationError("User not found"));
       }
 
       return user;
     } catch (error) {
       console.error("Error during token verification: ", error);
-      return Promise.reject(new Error("Invalid token"));
+      return Promise.reject(new AuthenticationError("Invalid token"));
     }
   }
 

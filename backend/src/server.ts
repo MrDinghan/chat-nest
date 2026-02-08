@@ -10,6 +10,7 @@ import { RegisterRoutes } from "@/routes/routes";
 import { HttpStatus } from "@/types/HttpStatus";
 
 import swaggerDocumentRaw from "../dist/swagger.json";
+import { AuthenticationError } from "./middlewares/authentication";
 
 dotenv.config();
 
@@ -27,10 +28,16 @@ app.use("/api", router);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error("Unexpected error:", err);
+  if (err instanceof AuthenticationError) {
+    return res.status(err.code).json({
+      code: err.code,
+      message: err.message,
+      data: err.data,
+    });
+  }
   return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
     code: HttpStatus.INTERNAL_SERVER_ERROR,
-    message: err.message ?? "Internal server error",
+    message: err.message || "Internal server error",
     data: null,
   });
 });

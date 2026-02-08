@@ -102,7 +102,10 @@ export class AuthController extends BaseController {
 
   @Security("jwt")
   @Get("checkAuth")
-  public async checkAuth(): Promise<null> {
-    return this.success(null);
+  public async checkAuth(
+    @Request() req: ExpressRequest,
+  ): Promise<Omit<UserResponseDto, "password">> {
+    const currentUser = req.user!;
+    return this.success(currentUser);
   }
 }

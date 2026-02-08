@@ -1,5 +1,7 @@
-import Axios from "axios";
 import type { AxiosRequestConfig } from "axios";
+import Axios from "axios";
+
+import { appNavigate } from "@/lib/navigation";
 
 export const HttpStatus = {
   OK: 200,
@@ -25,8 +27,15 @@ AXIOS_INSTANCE.interceptors.response.use(
     if (code === HttpStatus.OK || code === HttpStatus.CREATED) {
       return response.data.data;
     }
+    return Promise.reject(new Error("Unexpected response code: " + code));
   },
-  (error) => Promise.reject(error),
+  (error) => {
+    // if (error.response?.status === HttpStatus.UNAUTHORIZED) {
+    //   appNavigate("/login");
+    //   return Promise.reject(new Error("Unauthorized"));
+    // }
+    return Promise.reject(error);
+  },
 );
 
 export const request = <T>(url: string, options?: RequestInit): Promise<T> => {

@@ -25,11 +25,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CheckAuth200,
   IUserDTO,
   Logout200,
   PartialIUserDTO,
   PickIUserDTOEmailOrPassword,
+  PickUserResponseDtoExcludeKeyofUserResponseDtoPassword,
   UserResponseDto
 } from './chatNestAPI.schemas';
 
@@ -304,9 +304,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/api/auth/checkAuth`
 }
 
-export const checkAuth = async ( options?: RequestInit): Promise<CheckAuth200> => {
+export const checkAuth = async ( options?: RequestInit): Promise<PickUserResponseDtoExcludeKeyofUserResponseDtoPassword> => {
   
-  return request<CheckAuth200>(getCheckAuthUrl(),
+  return request<PickUserResponseDtoExcludeKeyofUserResponseDtoPassword>(getCheckAuthUrl(),
   {      
     ...options,
     method: 'GET'

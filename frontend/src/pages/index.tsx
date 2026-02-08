@@ -1,21 +1,18 @@
-import { useLogin } from "@/api/endpoints/auth";
+import type { FC } from "react";
+import { Navigate } from "react-router-dom";
 
-function HomePage() {
-  const { data, mutate: login } = useLogin();
-  console.log("email:", data?.email);
+import { useLogout } from "@/api/endpoints/auth";
+
+const HomePage: FC = () => {
+  const { mutate: logout, isSuccess } = useLogout();
+
+  if (isSuccess) return <Navigate to="/login" />;
 
   return (
-    <button
-      className="btn"
-      onClick={() =>
-        login({
-          data: { email: "user@example.com", password: "psw123" },
-        })
-      }
-    >
-      Button
+    <button className="btn" onClick={() => logout()}>
+      Logout
     </button>
   );
-}
+};
 
 export default HomePage;

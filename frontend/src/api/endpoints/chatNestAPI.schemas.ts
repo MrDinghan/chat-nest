@@ -91,20 +91,34 @@ export interface PartialIUserDTO {
 }
 
 /**
+ * From T, pick a set of properties whose keys are in the union K
+ */
+export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
+  /** User email */
+  email: string;
+  /** User fullname */
+  fullname: string;
+  /** User profile picture */
+  profilePic?: string;
+  /** MongoDB Object ID */
+  _id: string;
+  /** Created timestamp */
+  createdAt: string;
+  /** Updated timestamp */
+  updatedAt: string;
+}
+
+/**
+ * Construct a type with the properties of T except for those in type K.
+ */
+export type OmitUserResponseDtoPassword = PickUserResponseDtoExcludeKeyofUserResponseDtoPassword;
+
+/**
  * @nullable
  */
 export type Logout200 = typeof Logout200[keyof typeof Logout200] | null;
 
 
 export const Logout200 = {
-} as const;
-
-/**
- * @nullable
- */
-export type CheckAuth200 = typeof CheckAuth200[keyof typeof CheckAuth200] | null;
-
-
-export const CheckAuth200 = {
 } as const;
 
