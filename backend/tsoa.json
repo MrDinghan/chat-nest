@@ -5,8 +5,8 @@
   "spec": {
     "outputDirectory": "dist",
     "specVersion": 3,
-    "name": "MERN Product API",
-    "description": "API for managing products",
+    "name": "ChatNest API",
+    "description": "API for ChatNest chat application",
     "version": "1.0.0",
     "securityDefinitions": {
       "jwt": {

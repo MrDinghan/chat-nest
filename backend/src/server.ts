@@ -9,7 +9,7 @@ import { connectDB } from "@/lib/db";
 import { RegisterRoutes } from "@/routes/routes";
 import { HttpStatus } from "@/types/HttpStatus";
 
-import * as swaggerDocumentRaw from "../dist/swagger.json";
+import swaggerDocumentRaw from "../dist/swagger.json";
 
 dotenv.config();
 

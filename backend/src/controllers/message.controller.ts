@@ -1,5 +1,5 @@
 import { Request as ExpressRequest } from "express";
-import { Body, Get, Post, Request, Route, Security, Tags } from "tsoa";
+import { Body, Get, Path, Post, Request, Route, Security, Tags } from "tsoa";
 
 import cloudinary from "@/lib/cloudinary";
 import { IMessageDTO } from "@/models/message.dto";
@@ -29,13 +29,14 @@ export class MessageController extends BaseController {
   }
 
   @Security("jwt")
-  @Get("getMessages/:id")
+  @Get("getMessages/{id}")
   public async getMessages(
+    @Path() id: string,
     @Request() req: ExpressRequest,
   ): Promise<ApiResponse<MessageResponseDto[]>> {
     const currentUser = req.user!;
     const currentUserId = currentUser._id;
-    const userToChatId = req.params.id;
+    const userToChatId = id;
     const messages = await Message.find({
       $or: [
         { sender: currentUserId, recipient: userToChatId },
@@ -46,13 +47,14 @@ export class MessageController extends BaseController {
   }
 
   @Security("jwt")
-  @Post("postMessage/:id")
+  @Post("postMessage/{id}")
   public async postMessage(
+    @Path() id: string,
     @Body() body: Partial<IMessageDTO>,
     @Request() req: ExpressRequest,
   ): Promise<ApiResponse<MessageResponseDto>> {
     const { text, image } = body;
-    const receiverId = req.params.id;
+    const receiverId = id;
     const senderId = req.user!._id;
     if (!text && !image) {
       return this.fail("Message must contain text or image");
