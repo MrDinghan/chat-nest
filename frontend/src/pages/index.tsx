@@ -1,18 +1,7 @@
-import type { FC } from "react";
-import { Navigate } from "react-router-dom";
-
-import { useLogout } from "@/api/endpoints/auth";
+import { type FC } from "react";
 
 const HomePage: FC = () => {
-  const { mutate: logout, isSuccess } = useLogout();
-
-  if (isSuccess) return <Navigate to="/login" />;
-
-  return (
-    <button className="btn" onClick={() => logout()}>
-      Logout
-    </button>
-  );
+  return <div>home page</div>;
 };
 
 export default HomePage;

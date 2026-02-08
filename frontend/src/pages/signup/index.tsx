@@ -7,31 +7,52 @@ import {
   MessageSquare,
   User,
 } from "lucide-react";
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import { Link, Navigate } from "react-router-dom";
 
+import { useSignup } from "@/api/endpoints/auth";
 import AuthImagePattern from "@/components/AuthImagePattern";
 import AuthInput from "@/components/AuthInput";
+import useAuthStore from "@/stores/useAuthStore";
 
 interface FormData {
-  fullName: string;
+  fullname: string;
   email: string;
   password: string;
 }
 
 const SignupPage: FC = () => {
+  const { authUser, setAuthUser } = useAuthStore();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>();
   const [showPassword, setShowPassword] = useState(false);
-  const isSigningUp = false;
+  const {
+    data: authData,
+    mutate: signup,
+    isPending: isSigningUp,
+  } = useSignup();
 
   const onSubmit = (data: FormData) => {
-    console.log(data);
+    signup({
+      data,
+    });
   };
+
+  useEffect(() => {
+    if (authData) {
+      setAuthUser(authData);
+      toast.success("Account created successfully!");
+    }
+  }, [authData, setAuthUser]);
+
+  if (authUser) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -41,10 +62,7 @@ const SignupPage: FC = () => {
           {/* LOGO */}
           <div className="text-center mb-8">
             <div className="flex flex-col items-center gap-2 group">
-              <div
-                className="size-12 rounded-xl bg-primary/10 flex items-center justify-center
-              group-hover:bg-primary/20 transition-colors"
-              >
+              <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                 <MessageSquare className="size-6 text-primary" />
               </div>
               <h1 className="text-2xl font-bold mt-2">Create Account</h1>
@@ -60,8 +78,8 @@ const SignupPage: FC = () => {
               icon={<User className="size-5 text-base-content/40" />}
               type="text"
               placeholder="John Doe"
-              error={errors.fullName}
-              registration={register("fullName", {
+              error={errors.fullname}
+              registration={register("fullname", {
                 required: "Full name is required",
               })}
             />

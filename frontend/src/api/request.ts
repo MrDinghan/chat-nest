@@ -1,5 +1,6 @@
 import type { AxiosRequestConfig } from "axios";
 import Axios from "axios";
+import toast from "react-hot-toast";
 
 import { appNavigate } from "@/lib/navigation";
 
@@ -30,10 +31,14 @@ AXIOS_INSTANCE.interceptors.response.use(
     return Promise.reject(new Error("Unexpected response code: " + code));
   },
   (error) => {
-    // if (error.response?.status === HttpStatus.UNAUTHORIZED) {
-    //   appNavigate("/login");
-    //   return Promise.reject(new Error("Unauthorized"));
-    // }
+    if (Axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+    const message = error.response?.data?.message;
+    if (error.response?.status === HttpStatus.UNAUTHORIZED) {
+      appNavigate("/login");
+    }
+    toast.error(message || "An error occurred");
     return Promise.reject(error);
   },
 );

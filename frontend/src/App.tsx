@@ -1,19 +1,26 @@
 import { Loader } from "lucide-react";
 import { useEffect } from "react";
-import { useNavigate, useRoutes } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { useLocation, useNavigate, useRoutes } from "react-router-dom";
 
 import { useCheckAuth } from "@/api/endpoints/auth";
 import { setNavigate } from "@/lib/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import routes from "~react-pages";
 
+import Navbar from "./components/Navbar";
+
 function App() {
   const pages = useRoutes(routes);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { setAuthUser } = useAuthStore();
+
+  const isAuthPage = ["/login", "/signup"].includes(pathname);
   const { data: authUser, isLoading: isAuthLoading } = useCheckAuth({
     query: {
       retry: false,
+      enabled: !isAuthPage,
     },
   });
 
@@ -32,7 +39,13 @@ function App() {
       </div>
     );
 
-  return pages;
+  return (
+    <>
+      <Toaster />
+      <Navbar />
+      {pages}
+    </>
+  );
 }
 
 export default App;
