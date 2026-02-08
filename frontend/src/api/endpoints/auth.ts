@@ -27,9 +27,9 @@ import type {
 import type {
   IUserDTO,
   Logout200,
-  PartialIUserDTO,
   PickIUserDTOEmailOrPassword,
   PickUserResponseDtoExcludeKeyofUserResponseDtoPassword,
+  UpdateProfileBody,
   UserResponseDto
 } from './chatNestAPI.schemas';
 
@@ -240,15 +240,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/api/auth/updateProfile`
 }
 
-export const updateProfile = async (partialIUserDTO: PartialIUserDTO, options?: RequestInit): Promise<UserResponseDto> => {
-  
+export const updateProfile = async (updateProfileBody: UpdateProfileBody, options?: RequestInit): Promise<UserResponseDto> => {
+    const formData = new FormData();
+formData.append(`file`, updateProfileBody.file);
+
   return request<UserResponseDto>(getUpdateProfileUrl(),
   {      
     ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      partialIUserDTO,)
+    method: 'PUT'
+    ,
+    body: 
+      formData,
   }
 );}
 
@@ -256,8 +258,8 @@ export const updateProfile = async (partialIUserDTO: PartialIUserDTO, options?: 
 
 
 export const getUpdateProfileMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: PartialIUserDTO}, TContext>, request?: SecondParameter<typeof request>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: PartialIUserDTO}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext>, request?: SecondParameter<typeof request>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext> => {
 
 const mutationKey = ['updateProfile'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -269,7 +271,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProfile>>, {data: PartialIUserDTO}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProfile>>, {data: UpdateProfileBody}> = (props) => {
           const {data} = props ?? {};
 
           return  updateProfile(data,requestOptions)
@@ -283,15 +285,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateProfile>>>
-    export type UpdateProfileMutationBody = PartialIUserDTO
+    export type UpdateProfileMutationBody = UpdateProfileBody
     export type UpdateProfileMutationError = unknown
 
     export const useUpdateProfile = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: PartialIUserDTO}, TContext>, request?: SecondParameter<typeof request>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: UpdateProfileBody}, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateProfile>>,
         TError,
-        {data: PartialIUserDTO},
+        {data: UpdateProfileBody},
         TContext
       > => {
       return useMutation(getUpdateProfileMutationOptions(options), queryClient);

@@ -1,6 +1,7 @@
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
+import multer from "multer";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
 
@@ -19,11 +20,15 @@ const PORT = process.env.PORT || 3000;
 
 setCloudinary();
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 const router = express.Router();
-RegisterRoutes(router);
+RegisterRoutes(router, { multer: upload });
 app.use("/api", router);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

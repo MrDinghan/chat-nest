@@ -1,6 +1,16 @@
 import bcrypt from "bcryptjs";
 import { Request as ExpressRequest } from "express";
-import { Body, Get, Post, Put, Request, Route, Security, Tags } from "tsoa";
+import {
+  Body,
+  Get,
+  Post,
+  Put,
+  Request,
+  Route,
+  Security,
+  Tags,
+  UploadedFile,
+} from "tsoa";
 
 import cloudinary from "@/lib/cloudinary";
 import { generateToken } from "@/lib/utils";
@@ -80,18 +90,29 @@ export class AuthController extends BaseController {
   @Security("jwt")
   @Put("updateProfile")
   public async updateProfile(
-    @Body() body: Partial<IUserDTO>,
+    @UploadedFile() file: Express.Multer.File,
     @Request() req: ExpressRequest,
   ): Promise<UserResponseDto> {
     const currentUser = req.user!;
     const userId = currentUser._id;
-    const { profilePic } = body;
 
-    if (!profilePic) {
-      return this.fail("Profile pic is required", HttpStatus.BAD_REQUEST);
+    if (!file) {
+      return this.fail("Profile pic is required");
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    const uploadResponse = await new Promise<{ secure_url: string }>(
+      (resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { resource_type: "image" },
+          (error, result) => {
+            if (error || !result) return reject(error);
+            resolve(result);
+          },
+        );
+        stream.end(file.buffer);
+      },
+    );
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { profilePic: uploadResponse.secure_url },

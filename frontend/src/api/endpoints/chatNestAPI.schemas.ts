@@ -77,35 +77,21 @@ export interface PickIUserDTOEmailOrPassword {
 }
 
 /**
- * Make all properties in T optional
- */
-export interface PartialIUserDTO {
-  /** User email */
-  email?: string;
-  /** User fullname */
-  fullname?: string;
-  /** User password */
-  password?: string;
-  /** User profile picture */
-  profilePic?: string;
-}
-
-/**
  * From T, pick a set of properties whose keys are in the union K
  */
 export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
   /** User email */
   email: string;
-  /** User fullname */
-  fullname: string;
-  /** User profile picture */
-  profilePic?: string;
   /** MongoDB Object ID */
   _id: string;
   /** Created timestamp */
   createdAt: string;
   /** Updated timestamp */
   updatedAt: string;
+  /** User fullname */
+  fullname: string;
+  /** User profile picture */
+  profilePic?: string;
 }
 
 /**
@@ -121,4 +107,8 @@ export type Logout200 = typeof Logout200[keyof typeof Logout200] | null;
 
 export const Logout200 = {
 } as const;
+
+export type UpdateProfileBody = {
+  file: Blob;
+};
 

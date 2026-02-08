@@ -10,6 +10,8 @@ import { AuthController } from './../controllers/auth.controller';
 import { expressAuthentication } from './../middlewares/authentication';
 // @ts-ignore - no great way to install types from subpackage
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
+const multer = require('multer');
+
 
 const expressAuthenticationRecasted = expressAuthentication as (req: ExRequest, securityName: string, scopes?: string[], res?: ExResponse) => Promise<any>;
 
@@ -71,14 +73,9 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"password":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Partial_IUserDTO_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string"},"fullname":{"dataType":"string"},"password":{"dataType":"string"},"profilePic":{"dataType":"string"}},"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Pick_UserResponseDto.Exclude_keyofUserResponseDto.password__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"},"_id":{"dataType":"string","required":true},"createdAt":{"dataType":"string","required":true},"updatedAt":{"dataType":"string","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"_id":{"dataType":"string","required":true},"createdAt":{"dataType":"string","required":true},"updatedAt":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Omit_UserResponseDto.password_": {
@@ -94,13 +91,14 @@ const templateService = new ExpressTemplateService(models, {"noImplicitAdditiona
 
 
 
-export function RegisterRoutes(app: Router) {
+export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof multer>}) {
 
     // ###########################################################################################################
     //  NOTE: If you do not see routes for all of your controllers in this file, then you might not have informed tsoa of where to look
     //      Please look into the "controllerPathGlobs" config option described in the readme: https://github.com/lukeautry/tsoa
     // ###########################################################################################################
 
+    const upload = opts?.multer ||  multer({"limits":{"fileSize":8388608}});
 
     
         const argsMessageController_getUsersList: Record<string, TsoaRoute.ParameterSchema> = {
@@ -292,11 +290,17 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAuthController_updateProfile: Record<string, TsoaRoute.ParameterSchema> = {
-                body: {"in":"body","name":"body","required":true,"ref":"Partial_IUserDTO_"},
+                file: {"in":"formData","name":"file","required":true,"dataType":"file"},
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
         };
         app.put('/auth/updateProfile',
             authenticateMiddleware([{"jwt":[]}]),
+            upload.fields([
+                {
+                    name: "file",
+                    maxCount: 1
+                }
+            ]),
             ...(fetchMiddlewares<RequestHandler>(AuthController)),
             ...(fetchMiddlewares<RequestHandler>(AuthController.prototype.updateProfile)),
 
