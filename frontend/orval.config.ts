@@ -7,6 +7,15 @@ export default defineConfig({
       mode: "tags",
       target: "./src/api/endpoints",
       client: "react-query",
+      override: {
+        mutator: {
+          path: "./src/api/request.ts",
+          name: "request",
+        },
+        fetch: {
+          includeHttpResponseReturnType: false,
+        },
+      },
     },
   },
 });

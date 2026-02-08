@@ -31,16 +31,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ApiResponse_UserResponseDto-Array_": {
-        "dataType": "refObject",
-        "properties": {
-            "code": {"dataType":"double","required":true},
-            "message": {"dataType":"string","required":true},
-            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"UserResponseDto"},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "mongoose.Types.ObjectId": {
         "dataType": "refAlias",
         "type": {"dataType":"string","validators":{}},
@@ -60,39 +50,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ApiResponse_MessageResponseDto-Array_": {
-        "dataType": "refObject",
-        "properties": {
-            "code": {"dataType":"double","required":true},
-            "message": {"dataType":"string","required":true},
-            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"MessageResponseDto"},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ApiResponse_MessageResponseDto_": {
-        "dataType": "refObject",
-        "properties": {
-            "code": {"dataType":"double","required":true},
-            "message": {"dataType":"string","required":true},
-            "data": {"ref":"MessageResponseDto","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Partial_IMessageDTO_": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"text":{"dataType":"string"},"image":{"dataType":"string"},"senderId":{"ref":"mongoose.Types.ObjectId"},"receiverId":{"ref":"mongoose.Types.ObjectId"}},"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ApiResponse_UserResponseDto_": {
-        "dataType": "refObject",
-        "properties": {
-            "code": {"dataType":"double","required":true},
-            "message": {"dataType":"string","required":true},
-            "data": {"ref":"UserResponseDto","required":true},
-        },
-        "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "IUserDTO": {
@@ -111,24 +71,9 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"password":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ApiResponse_null_": {
-        "dataType": "refObject",
-        "properties": {
-            "code": {"dataType":"double","required":true},
-            "message": {"dataType":"string","required":true},
-            "data": {"dataType":"enum","enums":[null],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Partial_IUserDTO_": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string"},"fullname":{"dataType":"string"},"password":{"dataType":"string"},"profilePic":{"dataType":"string"}},"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "HttpStatus": {
-        "dataType": "refEnum",
-        "enums": [200,201,400,401,403,404,500],
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
@@ -369,7 +314,6 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAuthController_checkAuth: Record<string, TsoaRoute.ParameterSchema> = {
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
         };
         app.get('/auth/checkAuth',
             authenticateMiddleware([{"jwt":[]}]),

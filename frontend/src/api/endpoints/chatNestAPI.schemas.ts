@@ -22,12 +22,6 @@ export interface UserResponseDto {
   updatedAt: string;
 }
 
-export interface ApiResponseUserResponseDtoArray {
-  code: number;
-  message: string;
-  data: UserResponseDto[];
-}
-
 export type MongooseTypesObjectId = string;
 
 export interface MessageResponseDto {
@@ -47,18 +41,6 @@ export interface MessageResponseDto {
   updatedAt: string;
 }
 
-export interface ApiResponseMessageResponseDtoArray {
-  code: number;
-  message: string;
-  data: MessageResponseDto[];
-}
-
-export interface ApiResponseMessageResponseDto {
-  code: number;
-  message: string;
-  data: MessageResponseDto;
-}
-
 /**
  * Make all properties in T optional
  */
@@ -71,12 +53,6 @@ export interface PartialIMessageDTO {
   senderId?: MongooseTypesObjectId;
   /** Receiver's user ID */
   receiverId?: MongooseTypesObjectId;
-}
-
-export interface ApiResponseUserResponseDto {
-  code: number;
-  message: string;
-  data: UserResponseDto;
 }
 
 export interface IUserDTO {
@@ -101,22 +77,6 @@ export interface PickIUserDTOEmailOrPassword {
 }
 
 /**
- * @nullable
- */
-export type ApiResponseNullData = typeof ApiResponseNullData[keyof typeof ApiResponseNullData] | null;
-
-
-export const ApiResponseNullData = {
-} as const;
-
-export interface ApiResponseNull {
-  code: number;
-  message: string;
-  /** @nullable */
-  data: ApiResponseNullData;
-}
-
-/**
  * Make all properties in T optional
  */
 export interface PartialIUserDTO {
@@ -130,22 +90,21 @@ export interface PartialIUserDTO {
   profilePic?: string;
 }
 
-export type HttpStatus = typeof HttpStatus[keyof typeof HttpStatus];
+/**
+ * @nullable
+ */
+export type Logout200 = typeof Logout200[keyof typeof Logout200] | null;
 
 
-export const HttpStatus = {
-  NUMBER_200: 200,
-  NUMBER_201: 201,
-  NUMBER_400: 400,
-  NUMBER_401: 401,
-  NUMBER_403: 403,
-  NUMBER_404: 404,
-  NUMBER_500: 500,
+export const Logout200 = {
 } as const;
 
-export type CheckAuth200 = {
-  data: unknown;
-  message: string;
-  code: HttpStatus;
-};
+/**
+ * @nullable
+ */
+export type CheckAuth200 = typeof CheckAuth200[keyof typeof CheckAuth200] | null;
+
+
+export const CheckAuth200 = {
+} as const;
 

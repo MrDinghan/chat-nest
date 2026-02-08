@@ -25,28 +25,18 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ApiResponseMessageResponseDto,
-  ApiResponseMessageResponseDtoArray,
-  ApiResponseUserResponseDtoArray,
-  PartialIMessageDTO
+  MessageResponseDto,
+  PartialIMessageDTO,
+  UserResponseDto
 } from './chatNestAPI.schemas';
 
+import { request } from '../request';
 
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
-export type getUsersListResponse200 = {
-  data: ApiResponseUserResponseDtoArray
-  status: 200
-}
-    
-export type getUsersListResponseSuccess = (getUsersListResponse200) & {
-  headers: Headers;
-};
-;
-
-export type getUsersListResponse = (getUsersListResponseSuccess)
 
 export const getGetUsersListUrl = () => {
 
@@ -56,22 +46,16 @@ export const getGetUsersListUrl = () => {
   return `/api/message/getUsersListWithoutCurrentUser`
 }
 
-export const getUsersList = async ( options?: RequestInit): Promise<getUsersListResponse> => {
+export const getUsersList = async ( options?: RequestInit): Promise<UserResponseDto[]> => {
   
-  const res = await fetch(getGetUsersListUrl(),
+  return request<UserResponseDto[]>(getGetUsersListUrl(),
   {      
     ...options,
     method: 'GET'
     
     
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: getUsersListResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getUsersListResponse
-}
+);}
 
 
 
@@ -84,16 +68,16 @@ export const getGetUsersListQueryKey = () => {
     }
 
     
-export const getGetUsersListQueryOptions = <TData = Awaited<ReturnType<typeof getUsersList>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersList>>, TError, TData>>, fetch?: RequestInit}
+export const getGetUsersListQueryOptions = <TData = Awaited<ReturnType<typeof getUsersList>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersList>>, TError, TData>>, request?: SecondParameter<typeof request>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetUsersListQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersList>>> = ({ signal }) => getUsersList({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersList>>> = ({ signal }) => getUsersList({ signal, ...requestOptions });
 
       
 
@@ -113,7 +97,7 @@ export function useGetUsersList<TData = Awaited<ReturnType<typeof getUsersList>>
           TError,
           Awaited<ReturnType<typeof getUsersList>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUsersList<TData = Awaited<ReturnType<typeof getUsersList>>, TError = unknown>(
@@ -123,16 +107,16 @@ export function useGetUsersList<TData = Awaited<ReturnType<typeof getUsersList>>
           TError,
           Awaited<ReturnType<typeof getUsersList>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUsersList<TData = Awaited<ReturnType<typeof getUsersList>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersList>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersList>>, TError, TData>>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useGetUsersList<TData = Awaited<ReturnType<typeof getUsersList>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersList>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersList>>, TError, TData>>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -146,18 +130,6 @@ export function useGetUsersList<TData = Awaited<ReturnType<typeof getUsersList>>
 
 
 
-export type getMessagesResponse200 = {
-  data: ApiResponseMessageResponseDtoArray
-  status: 200
-}
-    
-export type getMessagesResponseSuccess = (getMessagesResponse200) & {
-  headers: Headers;
-};
-;
-
-export type getMessagesResponse = (getMessagesResponseSuccess)
-
 export const getGetMessagesUrl = (id: string,) => {
 
 
@@ -166,22 +138,16 @@ export const getGetMessagesUrl = (id: string,) => {
   return `/api/message/getMessages/${id}`
 }
 
-export const getMessages = async (id: string, options?: RequestInit): Promise<getMessagesResponse> => {
+export const getMessages = async (id: string, options?: RequestInit): Promise<MessageResponseDto[]> => {
   
-  const res = await fetch(getGetMessagesUrl(id),
+  return request<MessageResponseDto[]>(getGetMessagesUrl(id),
   {      
     ...options,
     method: 'GET'
     
     
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: getMessagesResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getMessagesResponse
-}
+);}
 
 
 
@@ -194,16 +160,16 @@ export const getGetMessagesQueryKey = (id: string,) => {
     }
 
     
-export const getGetMessagesQueryOptions = <TData = Awaited<ReturnType<typeof getMessages>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessages>>, TError, TData>>, fetch?: RequestInit}
+export const getGetMessagesQueryOptions = <TData = Awaited<ReturnType<typeof getMessages>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessages>>, TError, TData>>, request?: SecondParameter<typeof request>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetMessagesQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMessages>>> = ({ signal }) => getMessages(id, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMessages>>> = ({ signal }) => getMessages(id, { signal, ...requestOptions });
 
       
 
@@ -223,7 +189,7 @@ export function useGetMessages<TData = Awaited<ReturnType<typeof getMessages>>, 
           TError,
           Awaited<ReturnType<typeof getMessages>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMessages<TData = Awaited<ReturnType<typeof getMessages>>, TError = unknown>(
@@ -233,16 +199,16 @@ export function useGetMessages<TData = Awaited<ReturnType<typeof getMessages>>, 
           TError,
           Awaited<ReturnType<typeof getMessages>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMessages<TData = Awaited<ReturnType<typeof getMessages>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessages>>, TError, TData>>, fetch?: RequestInit}
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessages>>, TError, TData>>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useGetMessages<TData = Awaited<ReturnType<typeof getMessages>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessages>>, TError, TData>>, fetch?: RequestInit}
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMessages>>, TError, TData>>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -256,18 +222,6 @@ export function useGetMessages<TData = Awaited<ReturnType<typeof getMessages>>, 
 
 
 
-export type postMessageResponse200 = {
-  data: ApiResponseMessageResponseDto
-  status: 200
-}
-    
-export type postMessageResponseSuccess = (postMessageResponse200) & {
-  headers: Headers;
-};
-;
-
-export type postMessageResponse = (postMessageResponseSuccess)
-
 export const getPostMessageUrl = (id: string,) => {
 
 
@@ -277,9 +231,9 @@ export const getPostMessageUrl = (id: string,) => {
 }
 
 export const postMessage = async (id: string,
-    partialIMessageDTO: PartialIMessageDTO, options?: RequestInit): Promise<postMessageResponse> => {
+    partialIMessageDTO: PartialIMessageDTO, options?: RequestInit): Promise<MessageResponseDto> => {
   
-  const res = await fetch(getPostMessageUrl(id),
+  return request<MessageResponseDto>(getPostMessageUrl(id),
   {      
     ...options,
     method: 'POST',
@@ -287,27 +241,21 @@ export const postMessage = async (id: string,
     body: JSON.stringify(
       partialIMessageDTO,)
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: postMessageResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postMessageResponse
-}
+);}
 
 
 
 
 export const getPostMessageMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PartialIMessageDTO}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PartialIMessageDTO}, TContext>, request?: SecondParameter<typeof request>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PartialIMessageDTO}, TContext> => {
 
 const mutationKey = ['postMessage'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -315,7 +263,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof postMessage>>, {id: string;data: PartialIMessageDTO}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  postMessage(id,data,fetchOptions)
+          return  postMessage(id,data,requestOptions)
         }
 
 
@@ -330,7 +278,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type PostMessageMutationError = unknown
 
     export const usePostMessage = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PartialIMessageDTO}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PartialIMessageDTO}, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postMessage>>,
         TError,

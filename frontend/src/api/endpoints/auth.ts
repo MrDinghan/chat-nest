@@ -25,30 +25,21 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ApiResponseNull,
-  ApiResponseUserResponseDto,
   CheckAuth200,
   IUserDTO,
+  Logout200,
   PartialIUserDTO,
-  PickIUserDTOEmailOrPassword
+  PickIUserDTOEmailOrPassword,
+  UserResponseDto
 } from './chatNestAPI.schemas';
 
+import { request } from '../request';
 
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
-export type signupResponse200 = {
-  data: ApiResponseUserResponseDto
-  status: 200
-}
-    
-export type signupResponseSuccess = (signupResponse200) & {
-  headers: Headers;
-};
-;
-
-export type signupResponse = (signupResponseSuccess)
 
 export const getSignupUrl = () => {
 
@@ -58,9 +49,9 @@ export const getSignupUrl = () => {
   return `/api/auth/signup`
 }
 
-export const signup = async (iUserDTO: IUserDTO, options?: RequestInit): Promise<signupResponse> => {
+export const signup = async (iUserDTO: IUserDTO, options?: RequestInit): Promise<UserResponseDto> => {
   
-  const res = await fetch(getSignupUrl(),
+  return request<UserResponseDto>(getSignupUrl(),
   {      
     ...options,
     method: 'POST',
@@ -68,27 +59,21 @@ export const signup = async (iUserDTO: IUserDTO, options?: RequestInit): Promise
     body: JSON.stringify(
       iUserDTO,)
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: signupResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as signupResponse
-}
+);}
 
 
 
 
 export const getSignupMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUserDTO}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUserDTO}, TContext>, request?: SecondParameter<typeof request>}
 ): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUserDTO}, TContext> => {
 
 const mutationKey = ['signup'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -96,7 +81,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof signup>>, {data: IUserDTO}> = (props) => {
           const {data} = props ?? {};
 
-          return  signup(data,fetchOptions)
+          return  signup(data,requestOptions)
         }
 
 
@@ -111,7 +96,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type SignupMutationError = unknown
 
     export const useSignup = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUserDTO}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUserDTO}, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof signup>>,
         TError,
@@ -120,19 +105,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       > => {
       return useMutation(getSignupMutationOptions(options), queryClient);
     }
-    export type loginResponse200 = {
-  data: ApiResponseUserResponseDto
-  status: 200
-}
-    
-export type loginResponseSuccess = (loginResponse200) & {
-  headers: Headers;
-};
-;
-
-export type loginResponse = (loginResponseSuccess)
-
-export const getLoginUrl = () => {
+    export const getLoginUrl = () => {
 
 
   
@@ -140,9 +113,9 @@ export const getLoginUrl = () => {
   return `/api/auth/login`
 }
 
-export const login = async (pickIUserDTOEmailOrPassword: PickIUserDTOEmailOrPassword, options?: RequestInit): Promise<loginResponse> => {
+export const login = async (pickIUserDTOEmailOrPassword: PickIUserDTOEmailOrPassword, options?: RequestInit): Promise<UserResponseDto> => {
   
-  const res = await fetch(getLoginUrl(),
+  return request<UserResponseDto>(getLoginUrl(),
   {      
     ...options,
     method: 'POST',
@@ -150,27 +123,21 @@ export const login = async (pickIUserDTOEmailOrPassword: PickIUserDTOEmailOrPass
     body: JSON.stringify(
       pickIUserDTOEmailOrPassword,)
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: loginResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as loginResponse
-}
+);}
 
 
 
 
 export const getLoginMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserDTOEmailOrPassword}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserDTOEmailOrPassword}, TContext>, request?: SecondParameter<typeof request>}
 ): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserDTOEmailOrPassword}, TContext> => {
 
 const mutationKey = ['login'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -178,7 +145,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: PickIUserDTOEmailOrPassword}> = (props) => {
           const {data} = props ?? {};
 
-          return  login(data,fetchOptions)
+          return  login(data,requestOptions)
         }
 
 
@@ -193,7 +160,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type LoginMutationError = unknown
 
     export const useLogin = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserDTOEmailOrPassword}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserDTOEmailOrPassword}, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof login>>,
         TError,
@@ -202,19 +169,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       > => {
       return useMutation(getLoginMutationOptions(options), queryClient);
     }
-    export type logoutResponse200 = {
-  data: ApiResponseNull
-  status: 200
-}
-    
-export type logoutResponseSuccess = (logoutResponse200) & {
-  headers: Headers;
-};
-;
-
-export type logoutResponse = (logoutResponseSuccess)
-
-export const getLogoutUrl = () => {
+    export const getLogoutUrl = () => {
 
 
   
@@ -222,36 +177,30 @@ export const getLogoutUrl = () => {
   return `/api/auth/logout`
 }
 
-export const logout = async ( options?: RequestInit): Promise<logoutResponse> => {
+export const logout = async ( options?: RequestInit): Promise<Logout200> => {
   
-  const res = await fetch(getLogoutUrl(),
+  return request<Logout200>(getLogoutUrl(),
   {      
     ...options,
     method: 'POST'
     
     
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: logoutResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as logoutResponse
-}
+);}
 
 
 
 
 export const getLogoutMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, request?: SecondParameter<typeof request>}
 ): UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext> => {
 
 const mutationKey = ['logout'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -259,7 +208,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof logout>>, void> = () => {
           
 
-          return  logout(fetchOptions)
+          return  logout(requestOptions)
         }
 
 
@@ -274,7 +223,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type LogoutMutationError = unknown
 
     export const useLogout = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof logout>>,
         TError,
@@ -283,19 +232,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       > => {
       return useMutation(getLogoutMutationOptions(options), queryClient);
     }
-    export type updateProfileResponse200 = {
-  data: ApiResponseUserResponseDto
-  status: 200
-}
-    
-export type updateProfileResponseSuccess = (updateProfileResponse200) & {
-  headers: Headers;
-};
-;
-
-export type updateProfileResponse = (updateProfileResponseSuccess)
-
-export const getUpdateProfileUrl = () => {
+    export const getUpdateProfileUrl = () => {
 
 
   
@@ -303,9 +240,9 @@ export const getUpdateProfileUrl = () => {
   return `/api/auth/updateProfile`
 }
 
-export const updateProfile = async (partialIUserDTO: PartialIUserDTO, options?: RequestInit): Promise<updateProfileResponse> => {
+export const updateProfile = async (partialIUserDTO: PartialIUserDTO, options?: RequestInit): Promise<UserResponseDto> => {
   
-  const res = await fetch(getUpdateProfileUrl(),
+  return request<UserResponseDto>(getUpdateProfileUrl(),
   {      
     ...options,
     method: 'PUT',
@@ -313,27 +250,21 @@ export const updateProfile = async (partialIUserDTO: PartialIUserDTO, options?: 
     body: JSON.stringify(
       partialIUserDTO,)
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: updateProfileResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as updateProfileResponse
-}
+);}
 
 
 
 
 export const getUpdateProfileMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: PartialIUserDTO}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: PartialIUserDTO}, TContext>, request?: SecondParameter<typeof request>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: PartialIUserDTO}, TContext> => {
 
 const mutationKey = ['updateProfile'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -341,7 +272,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProfile>>, {data: PartialIUserDTO}> = (props) => {
           const {data} = props ?? {};
 
-          return  updateProfile(data,fetchOptions)
+          return  updateProfile(data,requestOptions)
         }
 
 
@@ -356,7 +287,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type UpdateProfileMutationError = unknown
 
     export const useUpdateProfile = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: PartialIUserDTO}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProfile>>, TError,{data: PartialIUserDTO}, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateProfile>>,
         TError,
@@ -365,19 +296,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       > => {
       return useMutation(getUpdateProfileMutationOptions(options), queryClient);
     }
-    export type checkAuthResponse200 = {
-  data: CheckAuth200
-  status: 200
-}
-    
-export type checkAuthResponseSuccess = (checkAuthResponse200) & {
-  headers: Headers;
-};
-;
-
-export type checkAuthResponse = (checkAuthResponseSuccess)
-
-export const getCheckAuthUrl = () => {
+    export const getCheckAuthUrl = () => {
 
 
   
@@ -385,22 +304,16 @@ export const getCheckAuthUrl = () => {
   return `/api/auth/checkAuth`
 }
 
-export const checkAuth = async ( options?: RequestInit): Promise<checkAuthResponse> => {
+export const checkAuth = async ( options?: RequestInit): Promise<CheckAuth200> => {
   
-  const res = await fetch(getCheckAuthUrl(),
+  return request<CheckAuth200>(getCheckAuthUrl(),
   {      
     ...options,
     method: 'GET'
     
     
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: checkAuthResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as checkAuthResponse
-}
+);}
 
 
 
@@ -413,16 +326,16 @@ export const getCheckAuthQueryKey = () => {
     }
 
     
-export const getCheckAuthQueryOptions = <TData = Awaited<ReturnType<typeof checkAuth>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkAuth>>, TError, TData>>, fetch?: RequestInit}
+export const getCheckAuthQueryOptions = <TData = Awaited<ReturnType<typeof checkAuth>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkAuth>>, TError, TData>>, request?: SecondParameter<typeof request>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCheckAuthQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkAuth>>> = ({ signal }) => checkAuth({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkAuth>>> = ({ signal }) => checkAuth({ signal, ...requestOptions });
 
       
 
@@ -442,7 +355,7 @@ export function useCheckAuth<TData = Awaited<ReturnType<typeof checkAuth>>, TErr
           TError,
           Awaited<ReturnType<typeof checkAuth>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useCheckAuth<TData = Awaited<ReturnType<typeof checkAuth>>, TError = unknown>(
@@ -452,16 +365,16 @@ export function useCheckAuth<TData = Awaited<ReturnType<typeof checkAuth>>, TErr
           TError,
           Awaited<ReturnType<typeof checkAuth>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useCheckAuth<TData = Awaited<ReturnType<typeof checkAuth>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkAuth>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkAuth>>, TError, TData>>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useCheckAuth<TData = Awaited<ReturnType<typeof checkAuth>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkAuth>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkAuth>>, TError, TData>>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

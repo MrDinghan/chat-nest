@@ -7,7 +7,6 @@ import { generateToken } from "@/lib/utils";
 import { IUserDTO } from "@/models/user.dto";
 import User from "@/models/user.model";
 import { UserResponseDto } from "@/models/user.response.dto";
-import { ApiResponse } from "@/types/ApiResponse";
 import { HttpStatus } from "@/types/HttpStatus";
 
 import { BaseController } from "./base-controller";
@@ -19,7 +18,7 @@ export class AuthController extends BaseController {
   public async signup(
     @Body() body: IUserDTO,
     @Request() req: ExpressRequest,
-  ): Promise<ApiResponse<UserResponseDto>> {
+  ): Promise<UserResponseDto> {
     const { email, fullname, password, profilePic } = body;
     if (password.length < 6) {
       return this.fail("Password must be at least 6 characters long");
@@ -53,7 +52,7 @@ export class AuthController extends BaseController {
   public async login(
     @Body() body: Pick<IUserDTO, "email" | "password">,
     @Request() req: ExpressRequest,
-  ): Promise<ApiResponse<UserResponseDto>> {
+  ): Promise<UserResponseDto> {
     const { email, password } = body;
     const user = await User.findOne({ email });
     if (!user) {
@@ -71,9 +70,7 @@ export class AuthController extends BaseController {
   }
 
   @Post("logout")
-  public async logout(
-    @Request() req: ExpressRequest,
-  ): Promise<ApiResponse<null>> {
+  public async logout(@Request() req: ExpressRequest): Promise<null> {
     if (req.res) {
       req.res.cookie("token", "", { maxAge: 0 });
     }
@@ -85,7 +82,7 @@ export class AuthController extends BaseController {
   public async updateProfile(
     @Body() body: Partial<IUserDTO>,
     @Request() req: ExpressRequest,
-  ): Promise<ApiResponse<UserResponseDto>> {
+  ): Promise<UserResponseDto> {
     const currentUser = req.user!;
     const userId = currentUser._id;
     const { profilePic } = body;
@@ -105,7 +102,7 @@ export class AuthController extends BaseController {
 
   @Security("jwt")
   @Get("checkAuth")
-  public async checkAuth(@Request() req: ExpressRequest) {
-    return this.success(req.user);
+  public async checkAuth(): Promise<null> {
+    return this.success(null);
   }
 }

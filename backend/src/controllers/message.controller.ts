@@ -7,7 +7,6 @@ import Message from "@/models/message.model";
 import { MessageResponseDto } from "@/models/message.response.dto";
 import User from "@/models/user.model";
 import { UserResponseDto } from "@/models/user.response.dto";
-import { ApiResponse } from "@/types/ApiResponse";
 import { HttpStatus } from "@/types/HttpStatus";
 
 import { BaseController } from "./base-controller";
@@ -19,7 +18,7 @@ export class MessageController extends BaseController {
   @Get("getUsersListWithoutCurrentUser")
   public async getUsersList(
     @Request() req: ExpressRequest,
-  ): Promise<ApiResponse<UserResponseDto[]>> {
+  ): Promise<UserResponseDto[]> {
     const currentUser = req.user!;
     const userId = currentUser._id;
     const filteredUsers = await User.find({ _id: { $ne: userId } }).select(
@@ -33,7 +32,7 @@ export class MessageController extends BaseController {
   public async getMessages(
     @Path() id: string,
     @Request() req: ExpressRequest,
-  ): Promise<ApiResponse<MessageResponseDto[]>> {
+  ): Promise<MessageResponseDto[]> {
     const currentUser = req.user!;
     const currentUserId = currentUser._id;
     const userToChatId = id;
@@ -52,7 +51,7 @@ export class MessageController extends BaseController {
     @Path() id: string,
     @Body() body: Partial<IMessageDTO>,
     @Request() req: ExpressRequest,
-  ): Promise<ApiResponse<MessageResponseDto>> {
+  ): Promise<MessageResponseDto> {
     const { text, image } = body;
     const receiverId = id;
     const senderId = req.user!._id;

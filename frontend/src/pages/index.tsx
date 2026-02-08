@@ -1,10 +1,21 @@
-import { useCheckAuth } from "@/api/endpoints/auth";
+import { useLogin } from "@/api/endpoints/auth";
 
 function HomePage() {
-  const { data } = useCheckAuth();
-  console.log("check auth data:", data);
+  const { data, mutate: login } = useLogin();
+  console.log("email:", data?.email);
 
-  return <button className="btn">Button</button>;
+  return (
+    <button
+      className="btn"
+      onClick={() =>
+        login({
+          data: { email: "user@example.com", password: "psw123" },
+        })
+      }
+    >
+      Button
+    </button>
+  );
 }
 
 export default HomePage;
