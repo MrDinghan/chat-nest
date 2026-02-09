@@ -52,11 +52,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Partial_IMessageDTO_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"text":{"dataType":"string"},"image":{"dataType":"string"},"senderId":{"ref":"mongoose.Types.ObjectId"},"receiverId":{"ref":"mongoose.Types.ObjectId"}},"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "IUserDTO": {
         "dataType": "refObject",
         "properties": {
@@ -166,11 +161,18 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMessageController_postMessage: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"string"},
-                body: {"in":"body","name":"body","required":true,"ref":"Partial_IMessageDTO_"},
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                text: {"in":"formData","name":"text","dataType":"string"},
+                image: {"in":"formData","name":"image","dataType":"file"},
         };
         app.post('/message/postMessage/:id',
             authenticateMiddleware([{"jwt":[]}]),
+            upload.fields([
+                {
+                    name: "image",
+                    maxCount: 1
+                }
+            ]),
             ...(fetchMiddlewares<RequestHandler>(MessageController)),
             ...(fetchMiddlewares<RequestHandler>(MessageController.prototype.postMessage)),
 

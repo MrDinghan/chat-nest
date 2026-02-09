@@ -1,8 +1,18 @@
 import { Request as ExpressRequest } from "express";
-import { Body, Get, Path, Post, Request, Route, Security, Tags } from "tsoa";
+import {
+  FormField,
+  Get,
+  Path,
+  Post,
+  Request,
+  Route,
+  Security,
+  Tags,
+  UploadedFile,
+} from "tsoa";
 
 import cloudinary from "@/lib/cloudinary";
-import { IMessageDTO } from "@/models/message.dto";
+
 import Message from "@/models/message.model";
 import { MessageResponseDto } from "@/models/message.response.dto";
 import User from "@/models/user.model";
@@ -49,10 +59,10 @@ export class MessageController extends BaseController {
   @Post("postMessage/{id}")
   public async postMessage(
     @Path() id: string,
-    @Body() body: Partial<IMessageDTO>,
     @Request() req: ExpressRequest,
+    @FormField() text?: string,
+    @UploadedFile() image?: Express.Multer.File,
   ): Promise<MessageResponseDto> {
-    const { text, image } = body;
     const receiverId = id;
     const senderId = req.user!._id;
     if (!text && !image) {
@@ -60,8 +70,19 @@ export class MessageController extends BaseController {
     }
     let imageUrl: string | undefined;
     if (image) {
-      const uploadResult = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResult.secure_url;
+      const uploadResponse = await new Promise<{ secure_url: string }>(
+        (resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { resource_type: "image" },
+            (error, result) => {
+              if (error || !result) return reject(error);
+              resolve(result);
+            },
+          );
+          stream.end(image.buffer);
+        },
+      );
+      imageUrl = uploadResponse.secure_url;
     }
     const newMessage = new Message({
       senderId: senderId,

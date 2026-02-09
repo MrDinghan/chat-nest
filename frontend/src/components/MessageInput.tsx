@@ -9,6 +9,7 @@ const MessageInput: FC = () => {
   const { selectedUser } = useChatStore();
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState<string>();
+  const [imageFile, setImageFile] = useState<File>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: sendMessage } = usePostMessage();
@@ -20,33 +21,34 @@ const MessageInput: FC = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const removeImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImagePreview(void 0);
+    setImageFile(void 0);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!text.trim() && !imagePreview) return;
+    if (!text.trim() && !imageFile) return;
     sendMessage(
       {
         id: selectedUser?._id ?? "",
         data: {
-          text: text.trim(),
-          image: imagePreview,
+          text: text.trim() || undefined,
+          image: imageFile,
         },
       },
       {
         onSuccess: () => {
           setText("");
+          if (imagePreview) URL.revokeObjectURL(imagePreview);
           setImagePreview(void 0);
+          setImageFile(void 0);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
       },
@@ -103,7 +105,7 @@ const MessageInput: FC = () => {
         <button
           type="submit"
           className="btn btn-sm btn-circle"
-          disabled={!text.trim() && !imagePreview}
+          disabled={!text.trim() && !imageFile}
         >
           <Send size={22} />
         </button>

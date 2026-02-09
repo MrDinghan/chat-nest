@@ -26,7 +26,7 @@ import type {
 
 import type {
   MessageResponseDto,
-  PartialIMessageDTO,
+  PostMessageBody,
   UserResponseDto
 } from './chatNestAPI.schemas';
 
@@ -231,15 +231,22 @@ export const getPostMessageUrl = (id: string,) => {
 }
 
 export const postMessage = async (id: string,
-    partialIMessageDTO: PartialIMessageDTO, options?: RequestInit): Promise<MessageResponseDto> => {
-  
+    postMessageBody?: PostMessageBody, options?: RequestInit): Promise<MessageResponseDto> => {
+    const formData = new FormData();
+if(postMessageBody?.text !== undefined) {
+ formData.append(`text`, postMessageBody.text);
+ }
+if(postMessageBody?.image !== undefined) {
+ formData.append(`image`, postMessageBody.image);
+ }
+
   return request<MessageResponseDto>(getPostMessageUrl(id),
   {      
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      partialIMessageDTO,)
+    method: 'POST'
+    ,
+    body: 
+      formData,
   }
 );}
 
@@ -247,8 +254,8 @@ export const postMessage = async (id: string,
 
 
 export const getPostMessageMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PartialIMessageDTO}, TContext>, request?: SecondParameter<typeof request>}
-): UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PartialIMessageDTO}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PostMessageBody}, TContext>, request?: SecondParameter<typeof request>}
+): UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PostMessageBody}, TContext> => {
 
 const mutationKey = ['postMessage'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -260,7 +267,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postMessage>>, {id: string;data: PartialIMessageDTO}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postMessage>>, {id: string;data: PostMessageBody}> = (props) => {
           const {id,data} = props ?? {};
 
           return  postMessage(id,data,requestOptions)
@@ -274,15 +281,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type PostMessageMutationResult = NonNullable<Awaited<ReturnType<typeof postMessage>>>
-    export type PostMessageMutationBody = PartialIMessageDTO
+    export type PostMessageMutationBody = PostMessageBody
     export type PostMessageMutationError = unknown
 
     export const usePostMessage = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PartialIMessageDTO}, TContext>, request?: SecondParameter<typeof request>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMessage>>, TError,{id: string;data: PostMessageBody}, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postMessage>>,
         TError,
-        {id: string;data: PartialIMessageDTO},
+        {id: string;data: PostMessageBody},
         TContext
       > => {
       return useMutation(getPostMessageMutationOptions(options), queryClient);

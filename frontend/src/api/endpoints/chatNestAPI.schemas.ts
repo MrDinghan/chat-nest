@@ -41,20 +41,6 @@ export interface MessageResponseDto {
   updatedAt: string;
 }
 
-/**
- * Make all properties in T optional
- */
-export interface PartialIMessageDTO {
-  /** Message content */
-  text?: string;
-  /** Message image URL */
-  image?: string;
-  /** Sender's user ID */
-  senderId?: MongooseTypesObjectId;
-  /** Receiver's user ID */
-  receiverId?: MongooseTypesObjectId;
-}
-
 export interface IUserDTO {
   /** User email */
   email: string;
@@ -98,6 +84,11 @@ export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
  * Construct a type with the properties of T except for those in type K.
  */
 export type OmitUserResponseDtoPassword = PickUserResponseDtoExcludeKeyofUserResponseDtoPassword;
+
+export type PostMessageBody = {
+  text?: string;
+  image?: Blob;
+};
 
 /**
  * @nullable
