@@ -10,13 +10,28 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 
 const ChatContainer: FC = () => {
-  const { selectedUser } = useChatStore();
+  const {
+    selectedUser,
+    messages,
+    setMessages,
+    subscribeToMessages,
+    unsubscribeFromMessages,
+  } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages, isLoading: isMessagesLoading } = useGetMessages(
+  const { data: messagesData, isLoading: isMessagesLoading } = useGetMessages(
     selectedUser?._id ?? "",
   );
+
+  useEffect(() => {
+    subscribeToMessages();
+    return unsubscribeFromMessages;
+  }, [subscribeToMessages, unsubscribeFromMessages]);
+
+  useEffect(() => {
+    setMessages(messagesData ?? []);
+  }, [messagesData, setMessages]);
 
   useEffect(() => {
     if (messageEndRef.current && messages) {

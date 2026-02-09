@@ -15,7 +15,7 @@ interface FormData {
 }
 
 const LoginPage: FC = () => {
-  const { authUser, setAuthUser } = useAuthStore();
+  const { authUser, setAuthUser, connectSocket } = useAuthStore();
   const { mutate: login, isPending: isLoggingIn } = useLogin();
   const {
     register,
@@ -33,6 +33,7 @@ const LoginPage: FC = () => {
         onSuccess: (authData) => {
           setAuthUser(authData);
           toast.success("Logged in successfully!");
+          connectSocket();
         },
       },
     );

@@ -7,7 +7,7 @@ import { appNavigate } from "@/lib/navigation";
 import useAuthStore from "@/stores/useAuthStore";
 
 const Navbar: FC = () => {
-  const { authUser, setAuthUser } = useAuthStore();
+  const { authUser, setAuthUser, disconnectSocket } = useAuthStore();
   const { mutate: logout } = useLogout();
 
   return (
@@ -49,6 +49,7 @@ const Navbar: FC = () => {
                       onSuccess: () => {
                         setAuthUser(void 0);
                         appNavigate("/login");
+                        disconnectSocket();
                       },
                     })
                   }

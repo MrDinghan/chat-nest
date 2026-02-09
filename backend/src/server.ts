@@ -7,6 +7,7 @@ import swaggerUi from "swagger-ui-express";
 
 import { setCloudinary } from "@/lib/cloudinary";
 import { connectDB } from "@/lib/db";
+import { app, server } from "@/lib/socket";
 import { RegisterRoutes } from "@/routes/routes";
 import { HttpStatus } from "@/types/HttpStatus";
 
@@ -15,7 +16,6 @@ import { AuthenticationError } from "./middlewares/authentication";
 
 dotenv.config();
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
 setCloudinary();
@@ -71,7 +71,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   connectDB();
   console.log(`Server is running on http://localhost:${PORT}`);
 });

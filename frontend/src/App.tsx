@@ -15,7 +15,7 @@ function App() {
   const pages = useRoutes(routes);
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { setAuthUser } = useAuthStore();
+  const { setAuthUser, connectSocket } = useAuthStore();
   const { theme } = useThemeStore();
 
   const isAuthPage = ["/login", "/signup"].includes(pathname);
@@ -32,7 +32,8 @@ function App() {
 
   useEffect(() => {
     setAuthUser(authUser);
-  }, [authUser, setAuthUser]);
+    connectSocket();
+  }, [authUser, setAuthUser, connectSocket]);
 
   if (isAuthLoading && !authUser)
     return (

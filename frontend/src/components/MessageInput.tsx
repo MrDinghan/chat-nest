@@ -6,7 +6,7 @@ import { usePostMessage } from "@/api/endpoints/message";
 import { useChatStore } from "@/stores/useChatStore";
 
 const MessageInput: FC = () => {
-  const { selectedUser } = useChatStore();
+  const { selectedUser, messages, setMessages } = useChatStore();
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState<string>();
   const [imageFile, setImageFile] = useState<File>();
@@ -44,12 +44,13 @@ const MessageInput: FC = () => {
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: (newMsg) => {
           setText("");
           if (imagePreview) URL.revokeObjectURL(imagePreview);
           setImagePreview(void 0);
           setImageFile(void 0);
           if (fileInputRef.current) fileInputRef.current.value = "";
+          setMessages([...messages, newMsg]);
         },
       },
     );

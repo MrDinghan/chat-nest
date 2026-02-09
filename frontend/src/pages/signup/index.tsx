@@ -24,7 +24,7 @@ interface FormData {
 }
 
 const SignupPage: FC = () => {
-  const { authUser, setAuthUser } = useAuthStore();
+  const { authUser, setAuthUser, connectSocket } = useAuthStore();
   const {
     register,
     handleSubmit,
@@ -42,6 +42,7 @@ const SignupPage: FC = () => {
         onSuccess: (authData) => {
           setAuthUser(authData);
           toast.success("Account created successfully!");
+          connectSocket();
         },
       },
     );

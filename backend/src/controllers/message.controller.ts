@@ -12,7 +12,7 @@ import {
 } from "tsoa";
 
 import cloudinary from "@/lib/cloudinary";
-
+import { getReceiverSocketId, io } from "@/lib/socket";
 import Message from "@/models/message.model";
 import { MessageResponseDto } from "@/models/message.response.dto";
 import User from "@/models/user.model";
@@ -91,6 +91,12 @@ export class MessageController extends BaseController {
       image: imageUrl,
     });
     await newMessage.save();
+
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
     return this.success(newMessage.toObject(), undefined, HttpStatus.CREATED);
   }
 }
