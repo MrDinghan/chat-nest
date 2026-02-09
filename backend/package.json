@@ -11,7 +11,8 @@
     "start:prod": "NODE_ENV=production node -r module-alias/register dist/server.js",
     "tsoa:routes": "tsoa routes",
     "tsoa:spec": "tsoa spec",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "seed": "ts-node -r tsconfig-paths/register src/seeds/user.seed.ts"
   },
   "keywords": [],
   "author": "",
