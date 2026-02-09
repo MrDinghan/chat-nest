@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
-import { IUserDTO } from "./user.dto";
+import { UserResponseDto } from "./user.response.dto";
 
-const userSchema = new mongoose.Schema<IUserDTO>(
+const userSchema = new mongoose.Schema<UserResponseDto>(
   {
     email: { type: String, required: true, unique: true },
     fullname: { type: String, required: true },
@@ -11,9 +11,9 @@ const userSchema = new mongoose.Schema<IUserDTO>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const User = mongoose.model<IUserDTO>("User", userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;

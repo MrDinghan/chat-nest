@@ -1,34 +1,53 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import { Loader } from "lucide-react";
+import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
+import { useLocation, useNavigate, useRoutes } from "react-router-dom";
+
+import { useCheckAuth } from "@/api/endpoints/auth";
+import { setNavigate } from "@/lib/navigation";
+import { useAuthStore } from "@/stores/useAuthStore";
+import routes from "~react-pages";
+
+import Navbar from "./components/Navbar";
+import { useThemeStore } from "./stores/useThemeStore";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const pages = useRoutes(routes);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { setAuthUser, connectSocket } = useAuthStore();
+  const { theme } = useThemeStore();
+
+  const isAuthPage = ["/login", "/signup"].includes(pathname);
+  const { data: authUser, isLoading: isAuthLoading } = useCheckAuth({
+    query: {
+      retry: false,
+      enabled: !isAuthPage,
+    },
+  });
+
+  useEffect(() => {
+    setNavigate(navigate);
+  }, [navigate]);
+
+  useEffect(() => {
+    setAuthUser(authUser);
+    connectSocket();
+  }, [authUser, setAuthUser, connectSocket]);
+
+  if (isAuthLoading && !authUser)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader className="size-10 animate-spin" />
+      </div>
+    );
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div data-theme={theme}>
+      <Toaster />
+      <Navbar />
+      {pages}
+    </div>
   );
 }
 

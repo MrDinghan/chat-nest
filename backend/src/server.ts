@@ -1,23 +1,51 @@
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
+import multer from "multer";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
 
+import { setCloudinary } from "@/lib/cloudinary";
 import { connectDB } from "@/lib/db";
+import { app, server } from "@/lib/socket";
 import { RegisterRoutes } from "@/routes/routes";
+import { HttpStatus } from "@/types/HttpStatus";
 
-import * as swaggerDocumentRaw from "../dist/swagger.json";
+import swaggerDocumentRaw from "../dist/swagger.json";
+import { AuthenticationError } from "./middlewares/authentication";
 
 dotenv.config();
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+setCloudinary();
 
+app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 const router = express.Router();
-RegisterRoutes(router);
+RegisterRoutes(router, { multer: upload });
 app.use("/api", router);
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof AuthenticationError) {
+    return res.status(err.code).json({
+      code: err.code,
+      message: err.message,
+      data: err.data,
+    });
+  }
+  return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+    code: HttpStatus.INTERNAL_SERVER_ERROR,
+    message: err.message || "Internal server error",
+    data: null,
+  });
+});
 
 const swaggerDocument = {
   ...swaggerDocumentRaw,
@@ -25,7 +53,7 @@ const swaggerDocument = {
     Object.entries(swaggerDocumentRaw.paths).map(([path, value]) => [
       `/api${path}`,
       value,
-    ])
+    ]),
   ),
 };
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -38,12 +66,12 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../../", "frontend/dist")));
   app.get("*", (req, res) => {
     res.sendFile(
-      path.resolve(__dirname, "../../", "frontend", "dist", "index.html")
+      path.resolve(__dirname, "../../", "frontend", "dist", "index.html"),
     );
   });
 }
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   connectDB();
   console.log(`Server is running on http://localhost:${PORT}`);
 });
