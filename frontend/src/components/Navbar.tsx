@@ -1,5 +1,5 @@
 import { LogOut, MessageSquare, Settings, User } from "lucide-react";
-import { type FC, useEffect } from "react";
+import { type FC } from "react";
 import { Link } from "react-router-dom";
 
 import { useLogout } from "@/api/endpoints/auth";
@@ -8,14 +8,7 @@ import useAuthStore from "@/stores/useAuthStore";
 
 const Navbar: FC = () => {
   const { authUser, setAuthUser } = useAuthStore();
-  const { mutate: logout, isSuccess: isLoggedOut } = useLogout();
-
-  useEffect(() => {
-    if (isLoggedOut) {
-      setAuthUser(undefined);
-      appNavigate("/login");
-    }
-  }, [isLoggedOut, setAuthUser]);
+  const { mutate: logout } = useLogout();
 
   return (
     <header className="bg-base-100 border-b border-base-300 fixed w-full top-0 z-40 backdrop-blur-lg bg-base-100/80">
@@ -51,7 +44,14 @@ const Navbar: FC = () => {
 
                 <button
                   className="flex gap-2 items-center"
-                  onClick={() => logout()}
+                  onClick={() =>
+                    logout(void 0, {
+                      onSuccess: () => {
+                        setAuthUser(void 0);
+                        appNavigate("/login");
+                      },
+                    })
+                  }
                 >
                   <LogOut className="size-5" />
                   <span className="hidden sm:inline">Logout</span>

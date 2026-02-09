@@ -7,7 +7,7 @@ import {
   MessageSquare,
   User,
 } from "lucide-react";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, Navigate } from "react-router-dom";
@@ -31,24 +31,21 @@ const SignupPage: FC = () => {
     formState: { errors },
   } = useForm<FormData>();
   const [showPassword, setShowPassword] = useState(false);
-  const {
-    data: authData,
-    mutate: signup,
-    isPending: isSigningUp,
-  } = useSignup();
+  const { mutate: signup, isPending: isSigningUp } = useSignup();
 
   const onSubmit = (data: FormData) => {
-    signup({
-      data,
-    });
+    signup(
+      {
+        data,
+      },
+      {
+        onSuccess: (authData) => {
+          setAuthUser(authData);
+          toast.success("Account created successfully!");
+        },
+      },
+    );
   };
-
-  useEffect(() => {
-    if (authData) {
-      setAuthUser(authData);
-      toast.success("Account created successfully!");
-    }
-  }, [authData, setAuthUser]);
 
   if (authUser) {
     return <Navigate to="/" replace />;

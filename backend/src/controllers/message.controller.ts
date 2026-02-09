@@ -38,8 +38,8 @@ export class MessageController extends BaseController {
     const userToChatId = id;
     const messages = await Message.find({
       $or: [
-        { sender: currentUserId, recipient: userToChatId },
-        { sender: userToChatId, recipient: currentUserId },
+        { senderId: currentUserId, receiverId: userToChatId },
+        { senderId: userToChatId, receiverId: currentUserId },
       ],
     }).sort({ createdAt: 1 });
     return this.success(messages);

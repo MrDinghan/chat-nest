@@ -1,5 +1,5 @@
 import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from "lucide-react";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, Navigate } from "react-router-dom";
@@ -16,7 +16,7 @@ interface FormData {
 
 const LoginPage: FC = () => {
   const { authUser, setAuthUser } = useAuthStore();
-  const { data: authData, mutate: login, isPending: isLoggingIn } = useLogin();
+  const { mutate: login, isPending: isLoggingIn } = useLogin();
   const {
     register,
     handleSubmit,
@@ -25,17 +25,18 @@ const LoginPage: FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = (data: FormData) => {
-    login({
-      data,
-    });
+    login(
+      {
+        data,
+      },
+      {
+        onSuccess: (authData) => {
+          setAuthUser(authData);
+          toast.success("Logged in successfully!");
+        },
+      },
+    );
   };
-
-  useEffect(() => {
-    if (authData) {
-      setAuthUser(authData);
-      toast.success("Logged in successfully!");
-    }
-  }, [authData, setAuthUser]);
 
   if (authUser) {
     return <Navigate to="/" replace />;
