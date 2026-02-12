@@ -7,7 +7,7 @@ set -e
 
 DOMAIN="chatnest.space"
 EMAIL="dh227498161@gmail.com"
-COMPOSE="docker compose"
+COMPOSE="docker-compose"
 
 echo ">>> 创建临时 Nginx 配置 (仅 HTTP)..."
 cat > nginx/init.conf << 'NGINX'
