@@ -36,13 +36,7 @@ cp nginx/init.conf nginx/default.conf
 $COMPOSE up -d nginx
 
 echo ">>> 申请 SSL 证书..."
-$COMPOSE run --rm certbot certonly \
-  --webroot \
-  --webroot-path /var/www/certbot \
-  -d "$DOMAIN" \
-  --email "$EMAIL" \
-  --agree-tos \
-  --no-eff-email
+$COMPOSE run --rm --entrypoint "certbot certonly --webroot --webroot-path /var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email" certbot
 
 echo ">>> 恢复完整 Nginx 配置..."
 cp nginx/default.conf.bak nginx/default.conf
