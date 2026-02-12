@@ -2,7 +2,6 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
 import multer from "multer";
-import path from "path";
 import swaggerUi from "swagger-ui-express";
 
 import { setCloudinary } from "@/lib/cloudinary";
@@ -61,15 +60,6 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.get("/swagger.json", (req, res) => {
   res.json(swaggerDocument);
 });
-
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../../", "frontend/dist")));
-  app.get("*", (req, res) => {
-    res.sendFile(
-      path.resolve(__dirname, "../../", "frontend", "dist", "index.html"),
-    );
-  });
-}
 
 server.listen(PORT, () => {
   connectDB();
