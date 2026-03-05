@@ -50,7 +50,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         m._id === id ? { ...m, failed: false, pending: true } : m,
       ),
     }),
-  selectedUser: undefined,
+  selectedUser: void 0,
   setSelectedUser: (user) => set({ selectedUser: user }),
   subscribeToMessages: () => {
     const { selectedUser } = get();

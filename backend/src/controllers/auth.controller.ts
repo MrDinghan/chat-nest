@@ -55,7 +55,7 @@ export class AuthController extends BaseController {
       this.setTokenCookie(req.res, token);
     }
     await newUser.save();
-    return this.success(newUser.toObject(), undefined, HttpStatus.CREATED);
+    return this.success(newUser.toObject(), void 0, HttpStatus.CREATED);
   }
 
   @Post("login")

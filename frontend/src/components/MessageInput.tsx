@@ -1,14 +1,20 @@
 import { Image, Send, X } from "lucide-react";
 import { type FC, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import TextareaAutosize from "react-textarea-autosize";
 
 import { usePostMessage } from "@/api/endpoints/message";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
 const MessageInput: FC = () => {
-  const { selectedUser, messages, setMessages, replaceMessage, markMessageFailed } =
-    useChatStore();
+  const {
+    selectedUser,
+    messages,
+    setMessages,
+    replaceMessage,
+    markMessageFailed,
+  } = useChatStore();
   const { authUser } = useAuthStore();
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState<string>();
@@ -46,7 +52,7 @@ const MessageInput: FC = () => {
       pending: true,
       senderId: authUser!._id,
       receiverId: selectedUser!._id,
-      text: text.trim() || undefined,
+      text: text.trim() || void 0,
       image: imagePreview,
       _retryFile: imageFile,
       createdAt: new Date().toISOString(),
@@ -104,14 +110,21 @@ const MessageInput: FC = () => {
         </div>
       )}
 
-      <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+      <form onSubmit={handleSendMessage} className="flex items-end gap-2">
         <div className="flex-1 flex gap-2">
-          <input
-            type="text"
-            className="w-full input input-bordered rounded-lg input-sm sm:input-md"
+          <TextareaAutosize
+            minRows={1}
+            maxRows={5}
+            className="w-full textarea textarea-bordered rounded-lg resize-none"
             placeholder="Type a message..."
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                e.currentTarget.form?.requestSubmit();
+              }
+            }}
           />
           <input
             type="file"

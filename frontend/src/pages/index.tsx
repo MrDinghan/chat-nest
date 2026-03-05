@@ -1,12 +1,23 @@
-import { type FC } from "react";
+import { type FC, useEffect } from "react";
 
 import ChatContainer from "@/components/ChatContainer";
 import NoChatSelected from "@/components/NoChatSelected";
 import Sidebar from "@/components/Sidebar";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
 const HomePage: FC = () => {
   const { selectedUser } = useChatStore();
+  const { authUser } = useAuthStore();
+  const authPic = authUser?.profilePic;
+
+  // cache profile pictures to improve performance
+  useEffect(() => {
+    if (authPic) {
+      const img = new window.Image();
+      img.src = authPic;
+    }
+  }, [authPic]);
 
   return (
     <div className="h-screen bg-base-200">

@@ -26,6 +26,7 @@ const ChatContainer: FC = () => {
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const isInitialLoad = useRef(true);
   const { mutate: sendMessage } = usePostMessage();
 
   const { data: messagesData, isLoading: isMessagesLoading } = useGetMessages(
@@ -42,9 +43,10 @@ const ChatContainer: FC = () => {
   }, [messagesData, setMessages]);
 
   useEffect(() => {
-    if (messageEndRef.current && messages) {
-      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    if (!messageEndRef.current) return;
+    const behavior = isInitialLoad.current ? "instant" : "smooth";
+    isInitialLoad.current = false;
+    messageEndRef.current.scrollIntoView({ behavior });
   }, [messages]);
 
   const handleRetry = useCallback(
@@ -97,7 +99,6 @@ const ChatContainer: FC = () => {
           <div
             key={message.clientId ?? message._id}
             className={`chat ${message.senderId === authUser?._id ? "chat-end" : "chat-start"}`}
-            ref={messageEndRef}
           >
             <div className="chat-image avatar">
               <div className="size-10 rounded-full border">
@@ -139,6 +140,7 @@ const ChatContainer: FC = () => {
             )}
           </div>
         ))}
+        <div ref={messageEndRef} />
       </div>
 
       <MessageInput />

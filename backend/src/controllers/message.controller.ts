@@ -97,6 +97,6 @@ export class MessageController extends BaseController {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
-    return this.success(newMessage.toObject(), undefined, HttpStatus.CREATED);
+    return this.success(newMessage.toObject(), void 0, HttpStatus.CREATED);
   }
 }

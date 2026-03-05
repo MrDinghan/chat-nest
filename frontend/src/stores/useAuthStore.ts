@@ -13,7 +13,7 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  authUser: undefined,
+  authUser: void 0,
   setAuthUser: (user) => set({ authUser: user }),
   onlineUsers: [],
   connectSocket: () => {
