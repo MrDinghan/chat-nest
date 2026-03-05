@@ -3,10 +3,13 @@ import { type FC, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { usePostMessage } from "@/api/endpoints/message";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
 const MessageInput: FC = () => {
-  const { selectedUser, messages, setMessages } = useChatStore();
+  const { selectedUser, messages, setMessages, replaceMessage, markMessageFailed } =
+    useChatStore();
+  const { authUser } = useAuthStore();
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState<string>();
   const [imageFile, setImageFile] = useState<File>();
@@ -35,22 +38,45 @@ const MessageInput: FC = () => {
   const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!text.trim() && !imageFile) return;
+
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMsg = {
+      _id: tempId,
+      clientId: tempId,
+      pending: true,
+      senderId: authUser!._id,
+      receiverId: selectedUser!._id,
+      text: text.trim() || undefined,
+      image: imagePreview,
+      _retryFile: imageFile,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setMessages([...messages, optimisticMsg]);
+
+    const prevImagePreview = imagePreview;
+    const prevImageFile = imageFile;
+    setText("");
+    setImagePreview(void 0);
+    setImageFile(void 0);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
     sendMessage(
       {
         id: selectedUser?._id ?? "",
         data: {
-          text: text.trim() || undefined,
-          image: imageFile,
+          text: optimisticMsg.text,
+          image: prevImageFile,
         },
       },
       {
         onSuccess: (newMsg) => {
-          setText("");
-          if (imagePreview) URL.revokeObjectURL(imagePreview);
-          setImagePreview(void 0);
-          setImageFile(void 0);
-          if (fileInputRef.current) fileInputRef.current.value = "";
-          setMessages([...messages, newMsg]);
+          if (prevImagePreview) URL.revokeObjectURL(prevImagePreview);
+          replaceMessage(tempId, newMsg);
+        },
+        onError: () => {
+          markMessageFailed(tempId);
         },
       },
     );

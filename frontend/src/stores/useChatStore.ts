@@ -5,11 +5,22 @@ import type {
   OmitUserResponseDtoPassword,
 } from "@/api/endpoints/chatNestAPI.schemas";
 
+export type ChatMessage = MessageResponseDto & {
+  clientId?: string;
+  pending?: boolean;
+  failed?: boolean;
+  _retryFile?: File;
+};
+
 import { useAuthStore } from "./useAuthStore";
 
 interface ChatState {
-  messages: MessageResponseDto[];
-  setMessages: (messages: MessageResponseDto[]) => void;
+  messages: ChatMessage[];
+  setMessages: (messages: ChatMessage[]) => void;
+  replaceMessage: (tempId: string, message: MessageResponseDto) => void;
+  removeMessage: (id: string) => void;
+  markMessageFailed: (id: string) => void;
+  markMessagePending: (id: string) => void;
   selectedUser?: OmitUserResponseDtoPassword;
   setSelectedUser: (user?: OmitUserResponseDtoPassword) => void;
   subscribeToMessages: () => void;
@@ -19,6 +30,26 @@ interface ChatState {
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   setMessages: (messages) => set({ messages }),
+  replaceMessage: (tempId, message) =>
+    set({
+      messages: get().messages.map((m) =>
+        m._id === tempId ? { ...message, clientId: m.clientId } : m,
+      ),
+    }),
+  removeMessage: (id) =>
+    set({ messages: get().messages.filter((m) => m._id !== id) }),
+  markMessageFailed: (id) =>
+    set({
+      messages: get().messages.map((m) =>
+        m._id === id ? { ...m, failed: true, pending: false } : m,
+      ),
+    }),
+  markMessagePending: (id) =>
+    set({
+      messages: get().messages.map((m) =>
+        m._id === id ? { ...m, failed: false, pending: true } : m,
+      ),
+    }),
   selectedUser: undefined,
   setSelectedUser: (user) => set({ selectedUser: user }),
   subscribeToMessages: () => {
