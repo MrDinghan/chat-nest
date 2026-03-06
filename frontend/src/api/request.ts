@@ -37,7 +37,7 @@ AXIOS_INSTANCE.interceptors.response.use(
     const message = error.response?.data?.message;
     if (error.response?.status === HttpStatus.UNAUTHORIZED) {
       appNavigate("/login");
-      return;
+      return Promise.reject(error);
     }
     toast.error(message || "An error occurred");
     return Promise.reject(error);

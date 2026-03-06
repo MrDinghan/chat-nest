@@ -31,10 +31,33 @@ export class MessageController extends BaseController {
   ): Promise<UserResponseDto[]> {
     const currentUser = req.user!;
     const userId = currentUser._id;
-    const filteredUsers = await User.find({ _id: { $ne: userId } }).select(
-      "-password",
+
+    // find the most recent message time for each conversation
+    const lastMessages = await Message.aggregate([
+      { $match: { $or: [{ senderId: userId }, { receiverId: userId }] } },
+      {
+        $group: {
+          _id: {
+            $cond: [{ $eq: ["$senderId", userId] }, "$receiverId", "$senderId"],
+          },
+          lastAt: { $max: "$createdAt" },
+        },
+      },
+    ]);
+
+    // fetch users and sort by last message time
+    const timeMap = new Map(
+      lastMessages.map((m) => [m._id.toString(), m.lastAt as Date]),
     );
-    return this.success(filteredUsers);
+    const users = await User.find({ _id: { $ne: userId } })
+      .select("-password")
+      .lean();
+    users.sort((a, b) => {
+      const ta = timeMap.get(a._id.toString())?.getTime() ?? 0;
+      const tb = timeMap.get(b._id.toString())?.getTime() ?? 0;
+      return tb - ta;
+    });
+    return this.success(users);
   }
 
   @Security("jwt")

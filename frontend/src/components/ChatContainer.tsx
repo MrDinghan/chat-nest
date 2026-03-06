@@ -26,7 +26,7 @@ const ChatContainer: FC = () => {
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef<HTMLDivElement>(null);
-  const isInitialLoad = useRef(true);
+  const isInitialLoad = useRef(false);
   const { mutate: sendMessage } = usePostMessage();
 
   const { data: messagesData, isLoading: isMessagesLoading } = useGetMessages(
@@ -36,11 +36,15 @@ const ChatContainer: FC = () => {
   useEffect(() => {
     subscribeToMessages();
     return unsubscribeFromMessages;
-  }, [subscribeToMessages, unsubscribeFromMessages]);
+  }, [subscribeToMessages, unsubscribeFromMessages, selectedUser?._id]);
 
   useEffect(() => {
     setMessages(messagesData ?? []);
   }, [messagesData, setMessages]);
+
+  useEffect(() => {
+    isInitialLoad.current = true;
+  }, [selectedUser?._id]);
 
   useEffect(() => {
     if (!messageEndRef.current) return;

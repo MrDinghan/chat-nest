@@ -1,9 +1,10 @@
 import { Image, Send, X } from "lucide-react";
-import { type FC, useRef, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import TextareaAutosize from "react-textarea-autosize";
 
-import { usePostMessage } from "@/api/endpoints/message";
+import { getGetUsersListQueryKey, postMessage } from "@/api/endpoints/message";
+import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
@@ -20,8 +21,6 @@ const MessageInput: FC = () => {
   const [imagePreview, setImagePreview] = useState<string>();
   const [imageFile, setImageFile] = useState<File>();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const { mutate: sendMessage } = usePostMessage();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,6 +44,7 @@ const MessageInput: FC = () => {
     e.preventDefault();
     if (!text.trim() && !imageFile) return;
 
+    // optimistic update
     const tempId = `temp_${Date.now()}`;
     const optimisticMsg = {
       _id: tempId,
@@ -68,25 +68,25 @@ const MessageInput: FC = () => {
     setImageFile(void 0);
     if (fileInputRef.current) fileInputRef.current.value = "";
 
-    sendMessage(
-      {
-        id: selectedUser?._id ?? "",
-        data: {
-          text: optimisticMsg.text,
-          image: prevImageFile,
-        },
-      },
-      {
-        onSuccess: (newMsg) => {
-          if (prevImagePreview) URL.revokeObjectURL(prevImagePreview);
-          replaceMessage(tempId, newMsg);
-        },
-        onError: () => {
-          markMessageFailed(tempId);
-        },
-      },
-    );
+    postMessage(selectedUser?._id ?? "", {
+      text: optimisticMsg.text,
+      image: prevImageFile,
+    })
+      .then((newMsg) => {
+        if (prevImagePreview) URL.revokeObjectURL(prevImagePreview);
+        replaceMessage(tempId, newMsg);
+        queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
+      })
+      .catch(() => {
+        markMessageFailed(tempId);
+      });
   };
+
+  useEffect(() => {
+    setText("");
+    removeImage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser?._id]);
 
   return (
     <div className="p-4 w-full">
@@ -144,10 +144,10 @@ const MessageInput: FC = () => {
         </div>
         <button
           type="submit"
-          className="btn btn-sm btn-circle"
+          className="btn btn-circle"
           disabled={!text.trim() && !imageFile}
         >
-          <Send size={22} />
+          <Send size={20} />
         </button>
       </form>
     </div>

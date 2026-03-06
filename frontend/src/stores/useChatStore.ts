@@ -4,6 +4,10 @@ import type {
   MessageResponseDto,
   OmitUserResponseDtoPassword,
 } from "@/api/endpoints/chatNestAPI.schemas";
+import { getGetUsersListQueryKey } from "@/api/endpoints/message";
+import { queryClient } from "@/lib/queryClient";
+
+import { useAuthStore } from "./useAuthStore";
 
 export type ChatMessage = MessageResponseDto & {
   clientId?: string;
@@ -11,8 +15,6 @@ export type ChatMessage = MessageResponseDto & {
   failed?: boolean;
   _retryFile?: File;
 };
-
-import { useAuthStore } from "./useAuthStore";
 
 interface ChatState {
   messages: ChatMessage[];
@@ -53,19 +55,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   selectedUser: void 0,
   setSelectedUser: (user) => set({ selectedUser: user }),
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
-
     const socket = useAuthStore.getState().socket;
 
     socket?.on("newMessage", (newMessage: MessageResponseDto) => {
-      const isMessageSentFromSelectedUser =
-        newMessage.senderId === selectedUser._id;
-      if (!isMessageSentFromSelectedUser) return;
-
-      set({
-        messages: [...get().messages, newMessage],
-      });
+      const { selectedUser } = get();
+      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
+      if (newMessage.senderId !== selectedUser?._id) return;
+      set({ messages: [...get().messages, newMessage] });
     });
   },
   unsubscribeFromMessages: () => {
