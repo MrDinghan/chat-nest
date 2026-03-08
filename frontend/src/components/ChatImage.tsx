@@ -1,8 +1,7 @@
 import "yet-another-react-lightbox/styles.css";
 
 import { useState } from "react";
-import Lightbox from "yet-another-react-lightbox";
-import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import Lightbox, { type SlideImage } from "yet-another-react-lightbox";
 
 interface Props {
   src: string;
@@ -37,8 +36,21 @@ const ChatImage = ({ src, slides, index, pending }: Props) => {
         open={open}
         index={index}
         slides={slides}
-        plugins={[Zoom]}
         close={() => setOpen(false)}
+        render={{
+          slide: ({ slide }) => (
+            <img
+              src={(slide as SlideImage).src}
+              alt="Attachment"
+              draggable={false}
+              style={{
+                maxHeight: "100%",
+                maxWidth: "100%",
+                objectFit: "contain",
+              }}
+            />
+          ),
+        }}
       />
     </>
   );

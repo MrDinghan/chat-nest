@@ -34,3 +34,8 @@ $COMPOSE up -d
 echo ""
 echo "=== 部署完成! ==="
 echo "访问 https://$DOMAIN"
+
+# 后续步骤（如果需要更新代码或重建服务）：
+# cd chat-nest
+# git pull
+# sudo docker-compose up -d --build
