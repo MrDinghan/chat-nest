@@ -1,5 +1,6 @@
 import { Request as ExpressRequest } from "express";
 import {
+  Body,
   FormField,
   Get,
   Path,
@@ -118,6 +119,43 @@ export class MessageController extends BaseController {
       { userId: currentUserId, senderId: id },
       { $set: { count: 0 } },
     );
+    return this.success(null);
+  }
+
+  @Security("jwt")
+  @Post("markRead")
+  public async markRead(
+    @Body() body: { messageIds: string[] },
+    @Request() req: ExpressRequest,
+  ): Promise<null> {
+    const currentUserId = req.user!._id;
+    const { messageIds } = body;
+
+    const toUpdate = await Message.find({
+      _id: { $in: messageIds },
+      receiverId: currentUserId,
+      isRead: false,
+    }).select("senderId");
+
+    if (toUpdate.length === 0) return this.success(null);
+
+    await Message.updateMany(
+      { _id: { $in: toUpdate.map((m) => m._id) } },
+      { $set: { isRead: true } },
+    );
+
+    const senderIds = [...new Set(toUpdate.map((m) => m.senderId.toString()))];
+    for (const senderId of senderIds) {
+      const socketId = getReceiverSocketId(senderId);
+      if (socketId) {
+        io.to(socketId).emit("messagesRead", {
+          messageIds: toUpdate
+            .filter((m) => m.senderId.toString() === senderId)
+            .map((m) => m._id.toString()),
+        });
+      }
+    }
+
     return this.success(null);
   }
 

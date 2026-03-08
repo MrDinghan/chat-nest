@@ -25,6 +25,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  MarkRead200,
+  MarkReadBody,
   MessageResponseDto,
   PostMessageBody,
   ResetUnread200,
@@ -285,6 +287,70 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getResetUnreadMutationOptions(options), queryClient);
+    }
+    export const getMarkReadUrl = () => {
+
+
+  
+
+  return `/api/message/markRead`
+}
+
+export const markRead = async (markReadBody: MarkReadBody, options?: RequestInit): Promise<MarkRead200> => {
+  
+  return request<MarkRead200>(getMarkReadUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      markReadBody,)
+  }
+);}
+
+
+
+
+export const getMarkReadMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markRead>>, TError,{data: MarkReadBody}, TContext>, request?: SecondParameter<typeof request>}
+): UseMutationOptions<Awaited<ReturnType<typeof markRead>>, TError,{data: MarkReadBody}, TContext> => {
+
+const mutationKey = ['markRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markRead>>, {data: MarkReadBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  markRead(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkReadMutationResult = NonNullable<Awaited<ReturnType<typeof markRead>>>
+    export type MarkReadMutationBody = MarkReadBody
+    export type MarkReadMutationError = unknown
+
+    export const useMarkRead = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markRead>>, TError,{data: MarkReadBody}, TContext>, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof markRead>>,
+        TError,
+        {data: MarkReadBody},
+        TContext
+      > => {
+      return useMutation(getMarkReadMutationOptions(options), queryClient);
     }
     export const getPostMessageUrl = (id: string,) => {
 

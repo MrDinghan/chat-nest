@@ -44,6 +44,7 @@ export interface MessageResponseDto {
   senderId: MongooseTypesObjectId;
   /** Receiver's user ID */
   receiverId: MongooseTypesObjectId;
+  isRead: boolean;
 }
 
 export interface IUserDTO {
@@ -97,6 +98,19 @@ export type ResetUnread200 = typeof ResetUnread200[keyof typeof ResetUnread200] 
 
 
 export const ResetUnread200 = {
+} as const;
+
+export type MarkReadBody = {
+  messageIds: string[];
+};
+
+/**
+ * @nullable
+ */
+export type MarkRead200 = typeof MarkRead200[keyof typeof MarkRead200] | null;
+
+
+export const MarkRead200 = {
 } as const;
 
 export type PostMessageBody = {

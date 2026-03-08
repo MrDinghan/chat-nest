@@ -24,6 +24,7 @@ interface ChatState {
   removeMessage: (id: string) => void;
   markMessageFailed: (id: string) => void;
   markMessagePending: (id: string) => void;
+  markMessagesReadByIds: (ids: string[]) => void;
   selectedUser?: OmitUserResponseDtoPassword;
   setSelectedUser: (user?: OmitUserResponseDtoPassword) => void;
   subscribeToMessages: () => () => void;
@@ -57,6 +58,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         m._id === id ? { ...m, failed: false, pending: true } : m,
       ),
     }),
+  markMessagesReadByIds: (ids) =>
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        ids.includes(m._id) ? { ...m, isRead: true } : m,
+      ),
+    })),
   selectedUser: void 0,
   setSelectedUser: (user) => set({ selectedUser: user }),
   subscribeToMessages: () => {
@@ -72,9 +79,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
     };
 
+    const readHandler = ({ messageIds }: { messageIds: string[] }) => {
+      get().markMessagesReadByIds(messageIds);
+    };
+
     socket?.on("newMessage", handler);
+    socket?.on("messagesRead", readHandler);
     return () => {
       socket?.off("newMessage", handler);
+      socket?.off("messagesRead", readHandler);
     };
   },
   unsubscribeFromMessages: () => {

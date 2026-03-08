@@ -10,6 +10,7 @@ import {
 
 import {
   getGetUsersListQueryKey,
+  markRead,
   useGetMessages,
   usePostMessage,
 } from "@/api/endpoints/message";
@@ -38,12 +39,16 @@ const ChatContainer: FC = () => {
     firstUnreadIndex,
     addIncomingUnread,
     clearIncomingUnread,
+    markMessagesReadByIds,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(false);
   const isAtBottom = useRef(true);
   const prevMessagesLengthRef = useRef(0);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const pendingReadRef = useRef<Set<string>>(new Set());
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { mutate: sendMessage } = usePostMessage();
 
   const { data: messagesData, isLoading: isMessagesLoading } = useGetMessages(
@@ -108,6 +113,39 @@ const ChatContainer: FC = () => {
       el.scrollTop = el.scrollHeight;
     }
   }, [messages, totalSize]);
+
+  const flushMarkRead = useCallback(() => {
+    const ids = [...pendingReadRef.current];
+    if (ids.length === 0) return;
+    pendingReadRef.current.clear();
+    markRead({ messageIds: ids });
+    markMessagesReadByIds(ids);
+  }, [markMessagesReadByIds]);
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = (entry.target as HTMLElement).dataset.msgId;
+            if (id) {
+              pendingReadRef.current.add(id);
+              observerRef.current?.unobserve(entry.target);
+            }
+          }
+        });
+        if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = setTimeout(flushMarkRead, 300);
+      },
+      { threshold: 0.5 },
+    );
+
+    return () => {
+      observerRef.current?.disconnect();
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+      flushMarkRead();
+    };
+  }, [selectedUser?._id, flushMarkRead]);
 
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -184,7 +222,19 @@ const ChatContainer: FC = () => {
                 <div
                   key={message.clientId ?? message._id}
                   data-index={vItem.index}
-                  ref={virtualizer.measureElement}
+                  ref={(el) => {
+                    virtualizer.measureElement(el);
+                    if (
+                      el &&
+                      message.senderId !== authUser?._id &&
+                      !message.isRead &&
+                      !message.pending &&
+                      !message.failed
+                    ) {
+                      el.dataset.msgId = message._id;
+                      observerRef.current?.observe(el);
+                    }
+                  }}
                   style={{
                     position: "absolute",
                     top: 0,
@@ -246,6 +296,13 @@ const ChatContainer: FC = () => {
                         </button>
                       </div>
                     )}
+                    {message.senderId === authUser?._id &&
+                      !message.pending &&
+                      !message.failed && (
+                        <div className="chat-footer text-xs opacity-50 mt-0.5">
+                          {message.isRead ? "Seen" : "Sent"}
+                        </div>
+                      )}
                   </div>
                 </div>
               );

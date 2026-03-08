@@ -55,6 +55,7 @@ const MessageInput: FC = () => {
       text: text.trim() || void 0,
       image: imagePreview,
       _retryFile: imageFile,
+      isRead: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
