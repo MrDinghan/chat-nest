@@ -28,6 +28,10 @@ interface ChatState {
   setSelectedUser: (user?: OmitUserResponseDtoPassword) => void;
   subscribeToMessages: () => () => void;
   unsubscribeFromMessages: () => void;
+  unreadIncomingCount: number;
+  firstUnreadIndex: number;
+  addIncomingUnread: (index: number) => void;
+  clearIncomingUnread: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -77,4 +81,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const socket = useAuthStore.getState().socket;
     socket?.off("newMessage");
   },
+  unreadIncomingCount: 0,
+  firstUnreadIndex: -1,
+  addIncomingUnread: (index) =>
+    set((s) => ({
+      unreadIncomingCount: s.unreadIncomingCount + 1,
+      firstUnreadIndex: s.firstUnreadIndex === -1 ? index : s.firstUnreadIndex,
+    })),
+  clearIncomingUnread: () => set({ unreadIncomingCount: 0, firstUnreadIndex: -1 }),
 }));
