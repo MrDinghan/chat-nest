@@ -1,0 +1,106 @@
+import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
+import type { FC } from "react";
+
+import { formatChatTime } from "@/lib/utils";
+import type { ChatMessage } from "@/stores/useChatStore";
+
+import ChatImage from "./ChatImage";
+
+interface MessageBubbleProps {
+  message: ChatMessage;
+  authUserId: string;
+  authUserPic: string;
+  selectedUserPic: string;
+  imageSlides: { src: string }[];
+  onRetry: (message: ChatMessage) => void;
+  isFirstUnread: boolean;
+}
+
+const MessageBubble: FC<MessageBubbleProps> = ({
+  message,
+  authUserId,
+  authUserPic,
+  selectedUserPic,
+  imageSlides,
+  onRetry,
+  isFirstUnread,
+}) => {
+  const isMine = message.senderId === authUserId;
+
+  return (
+    <>
+      {isFirstUnread && (
+        <div className="flex items-center gap-2 mb-3 px-2">
+          <div className="flex-1 h-px bg-base-300" />
+          <span className="text-xs text-base-content/50 whitespace-nowrap">
+            New Messages
+          </span>
+          <div className="flex-1 h-px bg-base-300" />
+        </div>
+      )}
+      <div className={`chat ${isMine ? "chat-end" : "chat-start"}`}>
+        <div className="chat-image avatar">
+          <div className="size-10 rounded-full border">
+            <img
+              src={isMine ? authUserPic || "/avatar.png" : selectedUserPic || "/avatar.png"}
+              alt="profile pic"
+            />
+          </div>
+        </div>
+        <div className="chat-header mb-1">
+          <time className="text-xs opacity-50 ml-1">
+            {formatChatTime(message.createdAt, true)}
+          </time>
+        </div>
+        {isMine ? (
+          <div className="flex items-end gap-1.5 justify-end">
+            {!message.pending && !message.failed && (
+              <div className="shrink-0 mb-1">
+                {message.isRead ? (
+                  <CheckCircle2 size={14} className="text-success" strokeWidth={2} />
+                ) : (
+                  <Circle size={14} className="text-base-content/30" strokeWidth={1.5} />
+                )}
+              </div>
+            )}
+            <div className="chat-bubble flex flex-col">
+              {message.image && (
+                <ChatImage
+                  src={message.image}
+                  slides={imageSlides}
+                  index={imageSlides.findIndex((s) => s.src === message.image)}
+                  pending={message.pending}
+                />
+              )}
+              {message.text && <p>{message.text}</p>}
+            </div>
+          </div>
+        ) : (
+          <div className="chat-bubble flex flex-col">
+            {message.image && (
+              <ChatImage
+                src={message.image}
+                slides={imageSlides}
+                index={imageSlides.findIndex((s) => s.src === message.image)}
+                pending={message.pending}
+              />
+            )}
+            {message.text && <p>{message.text}</p>}
+          </div>
+        )}
+        {message.failed && isMine && (
+          <div className="chat-footer">
+            <button
+              className="text-error flex items-center gap-1 text-xs mt-0.5"
+              onClick={() => onRetry(message)}
+            >
+              <AlertCircle size={12} /> Failed to send. Click to retry.
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default MessageBubble;

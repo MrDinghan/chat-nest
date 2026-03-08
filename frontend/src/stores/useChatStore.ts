@@ -31,6 +31,7 @@ interface ChatState {
   unreadIncomingCount: number;
   firstUnreadIndex: number;
   addIncomingUnread: (index: number) => void;
+  setFirstUnreadIndex: (index: number) => void;
   clearIncomingUnread: () => void;
 }
 
@@ -97,5 +98,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       unreadIncomingCount: s.unreadIncomingCount + 1,
       firstUnreadIndex: s.firstUnreadIndex === -1 ? index : s.firstUnreadIndex,
     })),
+  setFirstUnreadIndex: (index) => set({ firstUnreadIndex: index }),
   clearIncomingUnread: () => set({ unreadIncomingCount: 0, firstUnreadIndex: -1 }),
 }));
