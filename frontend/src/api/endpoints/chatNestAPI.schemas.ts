@@ -91,15 +91,6 @@ export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
  */
 export type OmitUserResponseDtoPassword = PickUserResponseDtoExcludeKeyofUserResponseDtoPassword;
 
-/**
- * @nullable
- */
-export type ResetUnread200 = typeof ResetUnread200[keyof typeof ResetUnread200] | null;
-
-
-export const ResetUnread200 = {
-} as const;
-
 export type MarkReadBody = {
   messageIds: string[];
 };

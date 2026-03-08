@@ -1,5 +1,5 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
 import {
   type FC,
   useCallback,
@@ -118,7 +118,9 @@ const ChatContainer: FC = () => {
     const ids = [...pendingReadRef.current];
     if (ids.length === 0) return;
     pendingReadRef.current.clear();
-    markRead({ messageIds: ids });
+    markRead({ messageIds: ids }).then(() => {
+      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
+    });
     markMessagesReadByIds(ids);
   }, [markMessagesReadByIds]);
 
@@ -272,19 +274,54 @@ const ChatContainer: FC = () => {
                         {formatChatTime(message.createdAt, true)}
                       </time>
                     </div>
-                    <div className="chat-bubble flex flex-col">
-                      {message.image && (
-                        <ChatImage
-                          src={message.image}
-                          slides={imageSlides}
-                          index={imageSlides.findIndex(
-                            (s) => s.src === message.image,
+                    {message.senderId === authUser?._id ? (
+                      <div className="flex items-end gap-1.5 justify-end">
+                        {!message.pending && !message.failed && (
+                          <div className="shrink-0 mb-1">
+                            {message.isRead ? (
+                              <CheckCircle2
+                                size={14}
+                                className="text-success"
+                                strokeWidth={2}
+                              />
+                            ) : (
+                              <Circle
+                                size={14}
+                                className="text-base-content/30"
+                                strokeWidth={1.5}
+                              />
+                            )}
+                          </div>
+                        )}
+                        <div className="chat-bubble flex flex-col">
+                          {message.image && (
+                            <ChatImage
+                              src={message.image}
+                              slides={imageSlides}
+                              index={imageSlides.findIndex(
+                                (s) => s.src === message.image,
+                              )}
+                              pending={message.pending}
+                            />
                           )}
-                          pending={message.pending}
-                        />
-                      )}
-                      {message.text && <p>{message.text}</p>}
-                    </div>
+                          {message.text && <p>{message.text}</p>}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="chat-bubble flex flex-col">
+                        {message.image && (
+                          <ChatImage
+                            src={message.image}
+                            slides={imageSlides}
+                            index={imageSlides.findIndex(
+                              (s) => s.src === message.image,
+                            )}
+                            pending={message.pending}
+                          />
+                        )}
+                        {message.text && <p>{message.text}</p>}
+                      </div>
+                    )}
                     {message.failed && message.senderId === authUser?._id && (
                       <div className="chat-footer">
                         <button
@@ -296,13 +333,6 @@ const ChatContainer: FC = () => {
                         </button>
                       </div>
                     )}
-                    {message.senderId === authUser?._id &&
-                      !message.pending &&
-                      !message.failed && (
-                        <div className="chat-footer text-xs opacity-50 mt-0.5">
-                          {message.isRead ? "Seen" : "Sent"}
-                        </div>
-                      )}
                   </div>
                 </div>
               );

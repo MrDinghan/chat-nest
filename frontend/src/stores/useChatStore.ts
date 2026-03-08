@@ -4,7 +4,6 @@ import type {
   MessageResponseDto,
   OmitUserResponseDtoPassword,
 } from "@/api/endpoints/chatNestAPI.schemas";
-import { resetUnread } from "@/api/endpoints/message";
 import { getGetUsersListQueryKey } from "@/api/endpoints/message";
 import { queryClient } from "@/lib/queryClient";
 
@@ -73,10 +72,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const { selectedUser } = get();
       if (newMessage.senderId !== selectedUser?._id) return;
       set({ messages: [...get().messages, newMessage] });
-      // Reset unread count since user is actively viewing this chat
-      resetUnread(newMessage.senderId).then(() => {
-        queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
-      });
+      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
     };
 
     const readHandler = ({ messageIds }: { messageIds: string[] }) => {

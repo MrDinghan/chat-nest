@@ -16,7 +16,6 @@ import cloudinary from "@/lib/cloudinary";
 import { getReceiverSocketId, io } from "@/lib/socket";
 import Message from "@/models/message.model";
 import { MessageResponseDto } from "@/models/message.response.dto";
-import UnreadCount from "@/models/unreadCount.model";
 import User from "@/models/user.model";
 import { UserResponseDto } from "@/models/user.response.dto";
 import { HttpStatus } from "@/types/HttpStatus";
@@ -72,9 +71,12 @@ export class MessageController extends BaseController {
       const tb = timeMap.get(b._id.toString())?.getTime() ?? 0;
       return tb - ta;
     });
-    const unreadCounts = await UnreadCount.find({ userId });
+    const unreadAgg = await Message.aggregate([
+      { $match: { receiverId: userId, isRead: { $ne: true } } },
+      { $group: { _id: "$senderId", count: { $sum: 1 } } },
+    ]);
     const unreadMap = new Map(
-      unreadCounts.map((u) => [u.senderId.toString(), u.count]),
+      unreadAgg.map((u) => [u._id.toString(), u.count as number]),
     );
     const enrichedUsers = users.map((u) => ({
       ...u,
@@ -100,26 +102,7 @@ export class MessageController extends BaseController {
       ],
     }).sort({ createdAt: 1 });
 
-    await UnreadCount.findOneAndUpdate(
-      { userId: currentUserId, senderId: userToChatId },
-      { $set: { count: 0 } },
-    );
-
     return this.success(messages);
-  }
-
-  @Security("jwt")
-  @Post("resetUnread/{id}")
-  public async resetUnread(
-    @Path() id: string,
-    @Request() req: ExpressRequest,
-  ): Promise<null> {
-    const currentUserId = req.user!._id;
-    await UnreadCount.findOneAndUpdate(
-      { userId: currentUserId, senderId: id },
-      { $set: { count: 0 } },
-    );
-    return this.success(null);
   }
 
   @Security("jwt")
@@ -134,7 +117,7 @@ export class MessageController extends BaseController {
     const toUpdate = await Message.find({
       _id: { $in: messageIds },
       receiverId: currentUserId,
-      isRead: false,
+      isRead: { $ne: true },
     }).select("senderId");
 
     if (toUpdate.length === 0) return this.success(null);
@@ -195,12 +178,6 @@ export class MessageController extends BaseController {
       image: imageUrl,
     });
     await newMessage.save();
-
-    await UnreadCount.findOneAndUpdate(
-      { userId: receiverId, senderId },
-      { $inc: { count: 1 } },
-      { upsert: true },
-    );
 
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
