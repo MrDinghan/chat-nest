@@ -3,6 +3,7 @@ import { create } from "zustand";
 import type {
   MessageResponseDto,
   OmitUserResponseDtoPassword,
+  ReactionDto,
 } from "@/api/endpoints/chatNestAPI.schemas";
 import { getGetUsersListQueryKey } from "@/api/endpoints/message";
 import { queryClient } from "@/lib/queryClient";
@@ -24,6 +25,7 @@ interface ChatState {
   markMessageFailed: (id: string) => void;
   markMessagePending: (id: string) => void;
   markMessagesReadByIds: (ids: string[]) => void;
+  updateMessageReactions: (messageId: string, reactions: ReactionDto[]) => void;
   selectedUser?: OmitUserResponseDtoPassword;
   setSelectedUser: (user?: OmitUserResponseDtoPassword) => void;
   subscribeToMessages: () => () => void;
@@ -64,12 +66,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
         ids.includes(m._id) ? { ...m, isRead: true } : m,
       ),
     })),
+  updateMessageReactions: (messageId, reactions) =>
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m._id === messageId ? { ...m, reactions } : m,
+      ),
+    })),
   selectedUser: void 0,
   setSelectedUser: (user) => set({ selectedUser: user }),
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
 
-    const handler = (newMessage: MessageResponseDto) => {
+    const newMessageHandler = (newMessage: MessageResponseDto) => {
       const { selectedUser } = get();
       if (newMessage.senderId !== selectedUser?._id) return;
       set({ messages: [...get().messages, newMessage] });
@@ -80,11 +88,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
       get().markMessagesReadByIds(messageIds);
     };
 
-    socket?.on("newMessage", handler);
+    const reactionHandler = ({
+      messageId,
+      reactions,
+    }: {
+      messageId: string;
+      reactions: ReactionDto[];
+    }) => {
+      get().updateMessageReactions(messageId, reactions);
+    };
+
+    socket?.on("newMessage", newMessageHandler);
     socket?.on("messagesRead", readHandler);
+    socket?.on("reactionUpdated", reactionHandler);
     return () => {
-      socket?.off("newMessage", handler);
+      socket?.off("newMessage", newMessageHandler);
       socket?.off("messagesRead", readHandler);
+      socket?.off("reactionUpdated", reactionHandler);
     };
   },
   unsubscribeFromMessages: () => {
@@ -99,5 +119,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       firstUnreadIndex: s.firstUnreadIndex === -1 ? index : s.firstUnreadIndex,
     })),
   setFirstUnreadIndex: (index) => set({ firstUnreadIndex: index }),
-  clearIncomingUnread: () => set({ unreadIncomingCount: 0, firstUnreadIndex: -1 }),
+  clearIncomingUnread: () =>
+    set({ unreadIncomingCount: 0, firstUnreadIndex: -1 }),
 }));

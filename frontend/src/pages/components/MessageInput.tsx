@@ -56,6 +56,7 @@ const MessageInput: FC = () => {
       image: imagePreview,
       _retryFile: imageFile,
       isRead: false,
+      reactions: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

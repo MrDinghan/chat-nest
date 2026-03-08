@@ -45,6 +45,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ReactionDto": {
+        "dataType": "refObject",
+        "properties": {
+            "emoji": {"dataType":"string","required":true},
+            "userId": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "mongoose.Types.ObjectId": {
         "dataType": "refAlias",
         "type": {"dataType":"string","validators":{}},
@@ -61,6 +70,7 @@ const models: TsoaRoute.Models = {
             "senderId": {"ref":"mongoose.Types.ObjectId","required":true},
             "receiverId": {"ref":"mongoose.Types.ObjectId","required":true},
             "isRead": {"dataType":"boolean","required":true},
+            "reactions": {"dataType":"array","array":{"dataType":"refObject","ref":"ReactionDto"},"required":true},
         },
         "additionalProperties": false,
     },

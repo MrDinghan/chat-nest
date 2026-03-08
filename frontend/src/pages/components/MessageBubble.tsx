@@ -5,6 +5,7 @@ import { formatChatTime } from "@/lib/utils";
 import type { ChatMessage } from "@/stores/useChatStore";
 
 import ChatImage from "./ChatImage";
+import MessageReactions from "./MessageReactions";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -38,7 +39,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
           <div className="flex-1 h-px bg-base-300" />
         </div>
       )}
-      <div className={`chat ${isMine ? "chat-end" : "chat-start"}`}>
+      <div className={`chat ${isMine ? "chat-end" : "chat-start"} group`}>
         <div className="chat-image avatar">
           <div className="size-10 rounded-full border">
             <img
@@ -88,16 +89,24 @@ const MessageBubble: FC<MessageBubbleProps> = ({
             {message.text && <p>{message.text}</p>}
           </div>
         )}
-        {message.failed && isMine && (
-          <div className="chat-footer">
+        <div className="chat-footer">
+          {message.failed && isMine && (
             <button
               className="text-error flex items-center gap-1 text-xs mt-0.5"
               onClick={() => onRetry(message)}
             >
               <AlertCircle size={12} /> Failed to send. Click to retry.
             </button>
-          </div>
-        )}
+          )}
+          {!message.pending && (
+            <MessageReactions
+              messageId={message._id}
+              reactions={message.reactions ?? []}
+              authUserId={authUserId}
+              isMine={isMine}
+            />
+          )}
+        </div>
       </div>
     </>
   );

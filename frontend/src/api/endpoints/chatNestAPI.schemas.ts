@@ -29,6 +29,11 @@ export interface UserResponseDto {
   unreadCount?: number;
 }
 
+export interface ReactionDto {
+  emoji: string;
+  userId: string;
+}
+
 export type MongooseTypesObjectId = string;
 
 export interface MessageResponseDto {
@@ -45,6 +50,7 @@ export interface MessageResponseDto {
   /** Receiver's user ID */
   receiverId: MongooseTypesObjectId;
   isRead: boolean;
+  reactions: ReactionDto[];
 }
 
 export interface IUserDTO {

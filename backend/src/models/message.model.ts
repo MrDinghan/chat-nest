@@ -17,6 +17,12 @@ const messageSchema = new mongoose.Schema<MessageResponseDto>(
     text: { type: String },
     image: { type: String },
     isRead: { type: Boolean, default: false },
+    reactions: [
+      {
+        emoji: { type: String, required: true },
+        userId: { type: String, required: true },
+      },
+    ],
   },
   {
     timestamps: true,

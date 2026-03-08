@@ -17,17 +17,19 @@ const ChatImage = ({ src, slides, index, pending }: Props) => {
   return (
     <>
       {!loaded && <div className="skeleton w-[200px] h-32 rounded-md mb-2" />}
-      <div className={`relative ${loaded ? "" : "opacity-0 h-0"}`}>
+      <div
+        className={`relative self-start max-w-[200px] ${loaded ? "mb-2" : "h-0 overflow-hidden"}`}
+      >
         <img
           src={src}
           alt="Attachment"
-          className={`sm:max-w-[200px] rounded-md mb-2 ${pending ? "" : "cursor-pointer"}`}
+          className={`block w-full rounded-md ${pending ? "" : "cursor-pointer"}`}
           loading="lazy"
           onLoad={() => setLoaded(true)}
           onClick={pending ? undefined : () => setOpen(true)}
         />
         {pending && loaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md mb-2">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md">
             <span className="loading loading-spinner loading-sm text-white" />
           </div>
         )}

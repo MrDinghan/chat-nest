@@ -2,6 +2,8 @@ import express, { Express } from "express";
 import http from "http";
 import { Server } from "socket.io";
 
+import Message from "@/models/message.model";
+
 const app: Express = express();
 const server = http.createServer(app);
 
@@ -21,6 +23,25 @@ io.on("connection", (socket) => {
 
   // io.emit() is used to send events to all the connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  socket.on("toggleReaction", async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+    const message = await Message.findById(messageId);
+    if (!message) return;
+
+    const idx = message.reactions.findIndex((r) => r.emoji === emoji && r.userId === userId);
+    if (idx >= 0) {
+      message.reactions.splice(idx, 1);
+    } else {
+      message.reactions.push({ emoji, userId });
+    }
+    await message.save();
+
+    const payload = { messageId, reactions: message.reactions };
+    const senderSocketId = getReceiverSocketId(String(message.senderId));
+    const receiverSocketId = getReceiverSocketId(String(message.receiverId));
+    if (senderSocketId) io.to(senderSocketId).emit("reactionUpdated", payload);
+    if (receiverSocketId) io.to(receiverSocketId).emit("reactionUpdated", payload);
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);

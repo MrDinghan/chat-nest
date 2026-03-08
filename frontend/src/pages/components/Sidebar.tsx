@@ -1,7 +1,10 @@
 import { Users } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
 
-import { getGetUsersListQueryKey, useGetUsersList } from "@/api/endpoints/message";
+import {
+  getGetUsersListQueryKey,
+  useGetUsersList,
+} from "@/api/endpoints/message";
 import { queryClient } from "@/lib/queryClient";
 import { formatChatTime } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -20,7 +23,9 @@ const Sidebar: FC = () => {
       queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
     };
     socket.on("newMessage", handler);
-    return () => { socket.off("newMessage", handler); };
+    return () => {
+      socket.off("newMessage", handler);
+    };
   }, [socket]);
 
   const { data: users, isLoading: isUsersLoading } = useGetUsersList();
@@ -73,7 +78,7 @@ const Sidebar: FC = () => {
               />
               {onlineUsers.includes(user._id) && (
                 <span
-                  className="absolute bottom-0 right-0 size-3 bg-green-500
+                  className="absolute bottom-0 right-0 size-2 bg-green-500
                   rounded-full ring-2 ring-zinc-900"
                 />
               )}

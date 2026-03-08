@@ -46,9 +46,8 @@ const ChatContainer: FC = () => {
     measureElement: (el) => el?.getBoundingClientRect().height ?? 0,
   });
 
-  const { scrollContainerRef, handleScroll } = useScrollManager({
+  const { scrollContainerRef, bottomSentinelRef } = useScrollManager({
     messages,
-    totalVirtualSize: virtualizer.getTotalSize(),
     selectedUserId: selectedUser?._id,
     scrollToIndex: virtualizer.scrollToIndex,
   });
@@ -123,11 +122,7 @@ const ChatContainer: FC = () => {
       <ChatHeader />
 
       <div className="flex-1 relative overflow-hidden">
-        <div
-          ref={scrollContainerRef}
-          className="h-full overflow-y-auto p-4"
-          onScroll={handleScroll}
-        >
+        <div ref={scrollContainerRef} className="h-full overflow-y-auto p-4">
           <div
             style={{ height: virtualizer.getTotalSize(), position: "relative" }}
           >
@@ -171,6 +166,7 @@ const ChatContainer: FC = () => {
               );
             })}
           </div>
+          <div ref={bottomSentinelRef} />
         </div>
 
         {unreadIncomingCount > 0 && (

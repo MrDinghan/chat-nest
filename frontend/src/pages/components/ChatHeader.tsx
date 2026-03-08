@@ -13,24 +13,19 @@ const ChatHeader: FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="avatar">
-            <div className="size-10 rounded-full relative">
-              <img
-                src={selectedUser?.profilePic || "/avatar.png"}
-                alt={selectedUser?.fullname}
-              />
-            </div>
+          <div className="relative">
+            <img
+              src={selectedUser?.profilePic || "/avatar.png"}
+              alt={selectedUser?.fullname}
+              className="size-10 rounded-full object-cover"
+            />
+            {onlineUsers.includes(selectedUser?._id ?? "") && (
+              <span className="absolute bottom-0 right-0 size-2 bg-green-500 rounded-full ring-2 ring-zinc-900" />
+            )}
           </div>
 
           {/* User info */}
-          <div>
-            <h3 className="font-medium">{selectedUser?.fullname}</h3>
-            <p className="text-sm text-base-content/70">
-              {onlineUsers.includes(selectedUser?._id ?? "")
-                ? "Online"
-                : "Offline"}
-            </p>
-          </div>
+          <h3 className="font-medium">{selectedUser?.fullname}</h3>
         </div>
 
         {/* Close/back button */}
