@@ -32,7 +32,7 @@ export class MessageController extends BaseController {
     const currentUser = req.user!;
     const userId = currentUser._id;
 
-    // Step 1: find the most recent message for each conversation
+    // find the most recent message for each conversation
     const lastMessages = await Message.aggregate([
       { $match: { $or: [{ senderId: userId }, { receiverId: userId }] } },
       { $sort: { createdAt: -1 } },
@@ -48,14 +48,18 @@ export class MessageController extends BaseController {
       },
     ]);
 
-    // Step 2: fetch users, sort by last message time, attach lastMessage preview
+    // fetch users, sort by last message time, attach lastMessage preview
     const timeMap = new Map(
       lastMessages.map((m) => [m._id.toString(), m.lastAt as Date]),
     );
     const lastMsgMap = new Map(
       lastMessages.map((m) => [
         m._id.toString(),
-        { text: m.lastText as string | undefined, image: m.lastImage as string | undefined, createdAt: (m.lastAt as Date)?.toISOString() },
+        {
+          text: m.lastText as string | undefined,
+          image: m.lastImage as string | undefined,
+          createdAt: (m.lastAt as Date)?.toISOString(),
+        },
       ]),
     );
     const users = await User.find({ _id: { $ne: userId } })
@@ -70,7 +74,7 @@ export class MessageController extends BaseController {
       ...u,
       lastMessage: lastMsgMap.get(u._id.toString()),
     }));
-    return this.success(enrichedUsers);
+    return this.success(enrichedUsers as unknown as UserResponseDto[]);
   }
 
   @Security("jwt")
