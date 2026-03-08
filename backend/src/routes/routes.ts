@@ -24,6 +24,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "text": {"dataType":"string"},
             "image": {"dataType":"string"},
+            "createdAt": {"dataType":"string"},
         },
         "additionalProperties": false,
     },
@@ -31,14 +32,15 @@ const models: TsoaRoute.Models = {
     "UserResponseDto": {
         "dataType": "refObject",
         "properties": {
+            "_id": {"dataType":"string","required":true},
+            "createdAt": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"string","required":true},
             "email": {"dataType":"string","required":true},
             "fullname": {"dataType":"string","required":true},
             "password": {"dataType":"string","required":true},
             "profilePic": {"dataType":"string"},
             "lastMessage": {"ref":"LastMessageDto"},
-            "_id": {"dataType":"string","required":true},
-            "createdAt": {"dataType":"string","required":true},
-            "updatedAt": {"dataType":"string","required":true},
+            "unreadCount": {"dataType":"double"},
         },
         "additionalProperties": false,
     },
@@ -51,13 +53,13 @@ const models: TsoaRoute.Models = {
     "MessageResponseDto": {
         "dataType": "refObject",
         "properties": {
+            "_id": {"dataType":"string","required":true},
+            "createdAt": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"string","required":true},
             "text": {"dataType":"string"},
             "image": {"dataType":"string"},
             "senderId": {"ref":"mongoose.Types.ObjectId","required":true},
             "receiverId": {"ref":"mongoose.Types.ObjectId","required":true},
-            "_id": {"dataType":"string","required":true},
-            "createdAt": {"dataType":"string","required":true},
-            "updatedAt": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -80,7 +82,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Pick_UserResponseDto.Exclude_keyofUserResponseDto.password__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"lastMessage":{"ref":"LastMessageDto"},"_id":{"dataType":"string","required":true},"createdAt":{"dataType":"string","required":true},"updatedAt":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"lastMessage":{"ref":"LastMessageDto"},"unreadCount":{"dataType":"double"},"_id":{"dataType":"string","required":true},"createdAt":{"dataType":"string","required":true},"updatedAt":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Omit_UserResponseDto.password_": {
@@ -158,6 +160,38 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'getMessages',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMessageController_resetUnread: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"string"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/message/resetUnread/:id',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MessageController)),
+            ...(fetchMiddlewares<RequestHandler>(MessageController.prototype.resetUnread)),
+
+            async function MessageController_resetUnread(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMessageController_resetUnread, request, response });
+
+                const controller = new MessageController();
+
+              await templateService.apiHandler({
+                methodName: 'resetUnread',
                 controller,
                 response,
                 next,

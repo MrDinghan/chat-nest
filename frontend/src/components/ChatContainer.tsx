@@ -1,9 +1,19 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { AlertCircle } from "lucide-react";
-import { type FC, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import {
+  type FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 
-import { usePostMessage } from "@/api/endpoints/message";
-import { useGetMessages } from "@/api/endpoints/message";
+import {
+  getGetUsersListQueryKey,
+  useGetMessages,
+  usePostMessage,
+} from "@/api/endpoints/message";
+import { queryClient } from "@/lib/queryClient";
 import { formatChatTime } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { ChatMessage } from "@/stores/useChatStore";
@@ -49,6 +59,12 @@ const ChatContainer: FC = () => {
   useEffect(() => {
     setMessages(messagesData ?? []);
   }, [messagesData, setMessages]);
+
+  useEffect(() => {
+    if (messagesData && selectedUser?._id) {
+      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
+    }
+  }, [messagesData, selectedUser?._id]);
 
   useEffect(() => {
     isInitialLoad.current = true;

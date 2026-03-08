@@ -8,10 +8,15 @@
 export interface LastMessageDto {
   text?: string;
   image?: string;
+  /** Timestamp of the last message */
   createdAt?: string;
 }
 
 export interface UserResponseDto {
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
   /** User email */
   email: string;
   /** User fullname */
@@ -21,17 +26,16 @@ export interface UserResponseDto {
   /** User profile picture */
   profilePic?: string;
   lastMessage?: LastMessageDto;
-  /** MongoDB Object ID */
-  _id: string;
-  /** Created timestamp */
-  createdAt: string;
-  /** Updated timestamp */
-  updatedAt: string;
+  unreadCount?: number;
 }
 
 export type MongooseTypesObjectId = string;
 
 export interface MessageResponseDto {
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
   /** Message content */
   text?: string;
   /** Message image URL */
@@ -40,12 +44,6 @@ export interface MessageResponseDto {
   senderId: MongooseTypesObjectId;
   /** Receiver's user ID */
   receiverId: MongooseTypesObjectId;
-  /** MongoDB Object ID */
-  _id: string;
-  /** Created timestamp */
-  createdAt: string;
-  /** Updated timestamp */
-  updatedAt: string;
 }
 
 export interface IUserDTO {
@@ -76,11 +74,10 @@ export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
   /** User email */
   email: string;
   lastMessage?: LastMessageDto;
+  unreadCount?: number;
   /** MongoDB Object ID */
   _id: string;
-  /** Created timestamp */
   createdAt: string;
-  /** Updated timestamp */
   updatedAt: string;
   /** User fullname */
   fullname: string;
@@ -92,6 +89,15 @@ export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
  * Construct a type with the properties of T except for those in type K.
  */
 export type OmitUserResponseDtoPassword = PickUserResponseDtoExcludeKeyofUserResponseDtoPassword;
+
+/**
+ * @nullable
+ */
+export type ResetUnread200 = typeof ResetUnread200[keyof typeof ResetUnread200] | null;
+
+
+export const ResetUnread200 = {
+} as const;
 
 export type PostMessageBody = {
   text?: string;

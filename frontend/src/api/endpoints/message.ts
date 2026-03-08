@@ -27,6 +27,7 @@ import type {
 import type {
   MessageResponseDto,
   PostMessageBody,
+  ResetUnread200,
   UserResponseDto
 } from './chatNestAPI.schemas';
 
@@ -222,7 +223,70 @@ export function useGetMessages<TData = Awaited<ReturnType<typeof getMessages>>, 
 
 
 
-export const getPostMessageUrl = (id: string,) => {
+export const getResetUnreadUrl = (id: string,) => {
+
+
+  
+
+  return `/api/message/resetUnread/${id}`
+}
+
+export const resetUnread = async (id: string, options?: RequestInit): Promise<ResetUnread200> => {
+  
+  return request<ResetUnread200>(getResetUnreadUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getResetUnreadMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetUnread>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof request>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetUnread>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['resetUnread'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetUnread>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  resetUnread(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetUnreadMutationResult = NonNullable<Awaited<ReturnType<typeof resetUnread>>>
+    
+    export type ResetUnreadMutationError = unknown
+
+    export const useResetUnread = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetUnread>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resetUnread>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getResetUnreadMutationOptions(options), queryClient);
+    }
+    export const getPostMessageUrl = (id: string,) => {
 
 
   

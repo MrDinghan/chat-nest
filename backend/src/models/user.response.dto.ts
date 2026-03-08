@@ -1,3 +1,4 @@
+import { BaseDocumentDto } from "./base.response.dto";
 import { IUserDTO } from "./user.dto";
 
 export interface LastMessageDto {
@@ -10,23 +11,7 @@ export interface LastMessageDto {
   createdAt?: string;
 }
 
-export interface UserResponseDto extends IUserDTO {
+export interface UserResponseDto extends BaseDocumentDto, IUserDTO {
   lastMessage?: LastMessageDto;
-  /**
-   * MongoDB Object ID
-   * @example "507f1f77bcf86cd799439011"
-   */
-  _id: string;
-
-  /**
-   * Created timestamp
-   * @example "2023-10-01T00:00:00.000Z"
-   */
-  createdAt: string;
-
-  /**
-   * Updated timestamp
-   * @example "2023-10-01T00:00:00.000Z"
-   */
-  updatedAt: string;
+  unreadCount?: number;
 }

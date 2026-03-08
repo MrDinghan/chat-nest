@@ -72,9 +72,14 @@ const Sidebar: FC = () => {
               />
               {onlineUsers.includes(user._id) && (
                 <span
-                  className="absolute bottom-0 right-0 size-3 bg-green-500 
+                  className="absolute bottom-0 right-0 size-3 bg-green-500
                   rounded-full ring-2 ring-zinc-900"
                 />
+              )}
+              {(user.unreadCount ?? 0) > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-primary text-primary-content text-xs flex items-center justify-center font-medium">
+                  {user.unreadCount! > 99 ? "99+" : user.unreadCount}
+                </span>
               )}
             </div>
 
