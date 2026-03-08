@@ -79,20 +79,18 @@ export function useScrollManager({
 
     // New messages arrived
     if (messages.length > prevCountRef.current) {
+      let hasOwnNewMessage = false;
       for (let i = prevCountRef.current; i < messages.length; i++) {
         const msg = messages[i];
-        if (
-          msg.senderId !== authUser?._id &&
-          !msg.pending &&
-          !msg.failed &&
-          !isAtBottomRef.current
-        ) {
+        if (msg.senderId === authUser?._id || msg.pending) {
+          hasOwnNewMessage = true;
+        } else if (!msg.failed && !isAtBottomRef.current) {
           addIncomingUnread(i);
         }
       }
       prevCountRef.current = messages.length;
 
-      if (isAtBottomRef.current) {
+      if (hasOwnNewMessage || isAtBottomRef.current) {
         scrollToIndex(messages.length - 1, { align: "end" });
       }
     }
