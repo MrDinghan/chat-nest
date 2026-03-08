@@ -23,6 +23,7 @@ const ChatImage = ({ src, slides, index, pending }: Props) => {
           src={src}
           alt="Attachment"
           className={`sm:max-w-[200px] rounded-md mb-2 ${pending ? "" : "cursor-pointer"}`}
+          loading="lazy"
           onLoad={() => setLoaded(true)}
           onClick={pending ? undefined : () => setOpen(true)}
         />

@@ -5,6 +5,12 @@
  * API for ChatNest chat application
  * OpenAPI spec version: 1.0.0
  */
+export interface LastMessageDto {
+  text?: string;
+  image?: string;
+  createdAt?: string;
+}
+
 export interface UserResponseDto {
   /** User email */
   email: string;
@@ -14,6 +20,7 @@ export interface UserResponseDto {
   password: string;
   /** User profile picture */
   profilePic?: string;
+  lastMessage?: LastMessageDto;
   /** MongoDB Object ID */
   _id: string;
   /** Created timestamp */
@@ -68,6 +75,7 @@ export interface PickIUserDTOEmailOrPassword {
 export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
   /** User email */
   email: string;
+  lastMessage?: LastMessageDto;
   /** MongoDB Object ID */
   _id: string;
   /** Created timestamp */

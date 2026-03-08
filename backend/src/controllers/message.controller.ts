@@ -32,22 +32,31 @@ export class MessageController extends BaseController {
     const currentUser = req.user!;
     const userId = currentUser._id;
 
-    // find the most recent message time for each conversation
+    // Step 1: find the most recent message for each conversation
     const lastMessages = await Message.aggregate([
       { $match: { $or: [{ senderId: userId }, { receiverId: userId }] } },
+      { $sort: { createdAt: -1 } },
       {
         $group: {
           _id: {
             $cond: [{ $eq: ["$senderId", userId] }, "$receiverId", "$senderId"],
           },
-          lastAt: { $max: "$createdAt" },
+          lastAt: { $first: "$createdAt" },
+          lastText: { $first: "$text" },
+          lastImage: { $first: "$image" },
         },
       },
     ]);
 
-    // fetch users and sort by last message time
+    // Step 2: fetch users, sort by last message time, attach lastMessage preview
     const timeMap = new Map(
       lastMessages.map((m) => [m._id.toString(), m.lastAt as Date]),
+    );
+    const lastMsgMap = new Map(
+      lastMessages.map((m) => [
+        m._id.toString(),
+        { text: m.lastText as string | undefined, image: m.lastImage as string | undefined, createdAt: (m.lastAt as Date)?.toISOString() },
+      ]),
     );
     const users = await User.find({ _id: { $ne: userId } })
       .select("-password")
@@ -57,7 +66,11 @@ export class MessageController extends BaseController {
       const tb = timeMap.get(b._id.toString())?.getTime() ?? 0;
       return tb - ta;
     });
-    return this.success(users);
+    const enrichedUsers = users.map((u) => ({
+      ...u,
+      lastMessage: lastMsgMap.get(u._id.toString()),
+    }));
+    return this.success(enrichedUsers);
   }
 
   @Security("jwt")

@@ -19,6 +19,15 @@ const expressAuthenticationRecasted = expressAuthentication as (req: ExRequest, 
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
+    "LastMessageDto": {
+        "dataType": "refObject",
+        "properties": {
+            "text": {"dataType":"string"},
+            "image": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UserResponseDto": {
         "dataType": "refObject",
         "properties": {
@@ -26,6 +35,7 @@ const models: TsoaRoute.Models = {
             "fullname": {"dataType":"string","required":true},
             "password": {"dataType":"string","required":true},
             "profilePic": {"dataType":"string"},
+            "lastMessage": {"ref":"LastMessageDto"},
             "_id": {"dataType":"string","required":true},
             "createdAt": {"dataType":"string","required":true},
             "updatedAt": {"dataType":"string","required":true},
@@ -70,7 +80,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Pick_UserResponseDto.Exclude_keyofUserResponseDto.password__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"_id":{"dataType":"string","required":true},"createdAt":{"dataType":"string","required":true},"updatedAt":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"lastMessage":{"ref":"LastMessageDto"},"_id":{"dataType":"string","required":true},"createdAt":{"dataType":"string","required":true},"updatedAt":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Omit_UserResponseDto.password_": {

@@ -4,8 +4,6 @@ import type {
   MessageResponseDto,
   OmitUserResponseDtoPassword,
 } from "@/api/endpoints/chatNestAPI.schemas";
-import { getGetUsersListQueryKey } from "@/api/endpoints/message";
-import { queryClient } from "@/lib/queryClient";
 
 import { useAuthStore } from "./useAuthStore";
 
@@ -25,7 +23,7 @@ interface ChatState {
   markMessagePending: (id: string) => void;
   selectedUser?: OmitUserResponseDtoPassword;
   setSelectedUser: (user?: OmitUserResponseDtoPassword) => void;
-  subscribeToMessages: () => void;
+  subscribeToMessages: () => () => void;
   unsubscribeFromMessages: () => void;
 }
 
@@ -57,14 +55,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
 
-    socket?.on("newMessage", (newMessage: MessageResponseDto) => {
+    const handler = (newMessage: MessageResponseDto) => {
       const { selectedUser } = get();
-      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
       if (newMessage.senderId !== selectedUser?._id) return;
       set({ messages: [...get().messages, newMessage] });
-    });
+    };
+
+    socket?.on("newMessage", handler);
+    return () => { socket?.off("newMessage", handler); };
   },
   unsubscribeFromMessages: () => {
+    // kept for compatibility — prefer the cleanup fn returned by subscribeToMessages
     const socket = useAuthStore.getState().socket;
     socket?.off("newMessage");
   },

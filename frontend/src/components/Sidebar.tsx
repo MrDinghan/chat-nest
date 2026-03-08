@@ -1,15 +1,26 @@
 import { Users } from "lucide-react";
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
-import { useGetUsersList } from "@/api/endpoints/message";
+import { getGetUsersListQueryKey, useGetUsersList } from "@/api/endpoints/message";
 import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton";
+import { queryClient } from "@/lib/queryClient";
+import { formatMessageTime } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
 const Sidebar: FC = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
-  const { onlineUsers } = useAuthStore();
+  const { onlineUsers, socket } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
+    };
+    socket.on("newMessage", handler);
+    return () => { socket.off("newMessage", handler); };
+  }, [socket]);
 
   const { data: users, isLoading: isUsersLoading } = useGetUsersList();
 
@@ -68,11 +79,22 @@ const Sidebar: FC = () => {
             </div>
 
             {/* User info - only visible on larger screens */}
-            <div className="hidden lg:block text-left min-w-0">
-              <div className="font-medium truncate">{user.fullname}</div>
-              <div className="text-sm text-zinc-400">
-                {onlineUsers.includes(user._id) ? "Online" : "Offline"}
+            <div className="hidden lg:flex flex-1 min-w-0 items-start justify-between gap-1 text-left">
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{user.fullname}</div>
+                <div className="text-sm text-zinc-400 truncate">
+                  {user.lastMessage
+                    ? user.lastMessage.image && !user.lastMessage.text
+                      ? "[picture]"
+                      : user.lastMessage.text
+                    : ""}
+                </div>
               </div>
+              {user.lastMessage?.createdAt && (
+                <span className="text-xs text-zinc-500 shrink-0 mt-0.5">
+                  {formatMessageTime(user.lastMessage.createdAt)}
+                </span>
+              )}
             </div>
           </button>
         ))}
