@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import type { FC } from "react";
 
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -33,9 +33,10 @@ const ChatHeader: FC = () => {
           </div>
         </div>
 
-        {/* Close button */}
+        {/* Close/back button */}
         <button onClick={() => setSelectedUser(void 0)}>
-          <X />
+          <ArrowLeft className="lg:hidden" />
+          <X className="hidden lg:block" />
         </button>
       </div>
     </div>

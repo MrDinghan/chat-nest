@@ -115,7 +115,7 @@ const MessageInput: FC = () => {
           <TextareaAutosize
             minRows={1}
             maxRows={5}
-            className="w-full textarea textarea-bordered rounded-lg resize-none"
+            className="w-full textarea textarea-bordered rounded-lg resize-none text-base"
             placeholder="Type a message..."
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -136,7 +136,7 @@ const MessageInput: FC = () => {
 
           <button
             type="button"
-            className={`hidden sm:flex btn btn-circle ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
+            className={`sm:flex btn btn-circle ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
             onClick={() => fileInputRef.current?.click()}
           >
             <Image size={20} />
