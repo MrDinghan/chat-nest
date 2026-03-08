@@ -4,7 +4,7 @@ import { type FC, useEffect, useState } from "react";
 import { getGetUsersListQueryKey, useGetUsersList } from "@/api/endpoints/message";
 import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton";
 import { queryClient } from "@/lib/queryClient";
-import { formatMessageTime } from "@/lib/utils";
+import { formatChatTime } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
@@ -92,7 +92,7 @@ const Sidebar: FC = () => {
               </div>
               {user.lastMessage?.createdAt && (
                 <span className="text-xs text-zinc-500 shrink-0 mt-0.5">
-                  {formatMessageTime(user.lastMessage.createdAt)}
+                  {formatChatTime(user.lastMessage.createdAt)}
                 </span>
               )}
             </div>

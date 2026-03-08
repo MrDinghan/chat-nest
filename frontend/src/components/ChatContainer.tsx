@@ -4,7 +4,7 @@ import { type FC, useCallback, useEffect, useLayoutEffect, useRef } from "react"
 
 import { usePostMessage } from "@/api/endpoints/message";
 import { useGetMessages } from "@/api/endpoints/message";
-import { formatMessageTime } from "@/lib/utils";
+import { formatChatTime } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { ChatMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
@@ -158,7 +158,7 @@ const ChatContainer: FC = () => {
                   </div>
                   <div className="chat-header mb-1">
                     <time className="text-xs opacity-50 ml-1">
-                      {formatMessageTime(message.createdAt)}
+                      {formatChatTime(message.createdAt, true)}
                     </time>
                   </div>
                   <div className="chat-bubble flex flex-col">
