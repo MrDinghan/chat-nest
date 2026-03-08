@@ -10,6 +10,7 @@ export default defineConfig({
     Pages({
       dirs: "src/pages",
       extensions: ["tsx", "jsx"],
+      exclude: ["**/components/**", "**/hooks/**"],
     }),
   ],
   resolve: {

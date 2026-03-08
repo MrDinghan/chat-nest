@@ -1,10 +1,11 @@
 import { type FC, useEffect } from "react";
 
-import ChatContainer from "@/components/ChatContainer";
-import NoChatSelected from "@/components/NoChatSelected";
-import Sidebar from "@/components/Sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
+
+import ChatContainer from "./components/ChatContainer";
+import NoChatSelected from "./components/NoChatSelected";
+import Sidebar from "./components/Sidebar";
 
 const HomePage: FC = () => {
   const { selectedUser } = useChatStore();

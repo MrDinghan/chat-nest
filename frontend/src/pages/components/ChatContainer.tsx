@@ -6,13 +6,13 @@ import {
   useGetMessages,
   usePostMessage,
 } from "@/api/endpoints/message";
-import { useMarkRead } from "@/hooks/useMarkRead";
-import { useScrollManager } from "@/hooks/useScrollManager";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { ChatMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
 
+import { useMarkRead } from "../hooks/useMarkRead";
+import { useScrollManager } from "../hooks/useScrollManager";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";

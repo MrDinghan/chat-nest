@@ -2,11 +2,12 @@ import { Users } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
 
 import { getGetUsersListQueryKey, useGetUsersList } from "@/api/endpoints/message";
-import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton";
 import { queryClient } from "@/lib/queryClient";
 import { formatChatTime } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
+
+import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 
 const Sidebar: FC = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
