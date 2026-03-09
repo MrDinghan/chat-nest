@@ -5,6 +5,7 @@ import {
   Get,
   Path,
   Post,
+  Query,
   Request,
   Route,
   Security,
@@ -15,7 +16,10 @@ import {
 import cloudinary from "@/lib/cloudinary";
 import { getReceiverSocketId, io } from "@/lib/socket";
 import Message from "@/models/message.model";
-import { MessageResponseDto } from "@/models/message.response.dto";
+import {
+  MessageResponseDto,
+  SearchMessageResultDto,
+} from "@/models/message.response.dto";
 import User from "@/models/user.model";
 import { UserResponseDto } from "@/models/user.response.dto";
 import { HttpStatus } from "@/types/HttpStatus";
@@ -34,7 +38,12 @@ export class MessageController extends BaseController {
     const userId = currentUser._id;
 
     // find the most recent message for each conversation
-    const lastMessages = await Message.aggregate([
+    const lastMessages = await Message.aggregate<{
+      _id: string;
+      lastAt: Date | undefined;
+      lastText: string | undefined;
+      lastImage: string | undefined;
+    }>([
       { $match: { $or: [{ senderId: userId }, { receiverId: userId }] } },
       { $sort: { createdAt: -1 } },
       {
@@ -51,15 +60,15 @@ export class MessageController extends BaseController {
 
     // fetch users, sort by last message time, attach lastMessage preview
     const timeMap = new Map(
-      lastMessages.map((m) => [m._id.toString(), m.lastAt as Date]),
+      lastMessages.map((m) => [m._id.toString(), m.lastAt]),
     );
     const lastMsgMap = new Map(
       lastMessages.map((m) => [
         m._id.toString(),
         {
-          text: m.lastText as string | undefined,
-          image: m.lastImage as string | undefined,
-          createdAt: (m.lastAt as Date)?.toISOString(),
+          text: m.lastText,
+          image: m.lastImage,
+          createdAt: m.lastAt?.toISOString(),
         },
       ]),
     );
@@ -71,19 +80,22 @@ export class MessageController extends BaseController {
       const tb = timeMap.get(b._id.toString())?.getTime() ?? 0;
       return tb - ta;
     });
-    const unreadAgg = await Message.aggregate([
+    const unreadAgg = await Message.aggregate<{
+      _id: string;
+      count: number;
+    }>([
       { $match: { receiverId: userId, isRead: { $ne: true } } },
       { $group: { _id: "$senderId", count: { $sum: 1 } } },
     ]);
     const unreadMap = new Map(
-      unreadAgg.map((u) => [u._id.toString(), u.count as number]),
+      unreadAgg.map((u) => [u._id.toString(), u.count]),
     );
     const enrichedUsers = users.map((u) => ({
       ...u,
       lastMessage: lastMsgMap.get(u._id.toString()),
       unreadCount: unreadMap.get(u._id.toString()) ?? 0,
     }));
-    return this.success(enrichedUsers as unknown as UserResponseDto[]);
+    return this.success(enrichedUsers);
   }
 
   @Security("jwt")
@@ -140,6 +152,59 @@ export class MessageController extends BaseController {
     }
 
     return this.success(null);
+  }
+
+  @Security("jwt")
+  @Get("search")
+  public async search(
+    @Query("q") q: string,
+    @Request() req: ExpressRequest,
+  ): Promise<SearchMessageResultDto[]> {
+    const currentUserId = req.user!._id;
+
+    const results = await Message.aggregate<SearchMessageResultDto>([
+      {
+        $match: {
+          $or: [{ senderId: currentUserId }, { receiverId: currentUserId }],
+          text: { $regex: q, $options: "i" },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $limit: 20 },
+      {
+        $addFields: {
+          otherUserId: {
+            $cond: [
+              { $eq: ["$senderId", currentUserId] },
+              "$receiverId",
+              "$senderId",
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "otherUserId",
+          foreignField: "_id",
+          as: "otherUserArr",
+          pipeline: [{ $project: { _id: 1, fullname: 1, profilePic: 1 } }],
+        },
+      },
+      {
+        $addFields: {
+          otherUser: { $arrayElemAt: ["$otherUserArr", 0] },
+        },
+      },
+      {
+        $project: {
+          otherUserArr: 0,
+          otherUserId: 0,
+        },
+      },
+    ]);
+
+    return this.success(results);
   }
 
   @Security("jwt")

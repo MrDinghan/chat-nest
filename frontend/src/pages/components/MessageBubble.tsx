@@ -15,6 +15,7 @@ interface MessageBubbleProps {
   imageSlides: { src: string }[];
   onRetry: (message: ChatMessage) => void;
   isFirstUnread: boolean;
+  isHighlighted?: boolean;
 }
 
 const MessageBubble: FC<MessageBubbleProps> = ({
@@ -25,11 +26,14 @@ const MessageBubble: FC<MessageBubbleProps> = ({
   imageSlides,
   onRetry,
   isFirstUnread,
+  isHighlighted,
 }) => {
   const isMine = message.senderId === authUserId;
 
   return (
-    <>
+    <div
+      className={`rounded-lg px-2 transition-colors duration-700 ${isHighlighted ? "bg-yellow-100/70" : "bg-transparent"}`}
+    >
       {isFirstUnread && (
         <div className="flex items-center gap-2 mb-3 px-2">
           <div className="flex-1 h-px bg-base-300" />
@@ -64,7 +68,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
                 )}
               </div>
             )}
-            <div className="chat-bubble flex flex-col">
+            <div className="chat-bubble chat-bubble-primary flex flex-col">
               {message.image && (
                 <ChatImage
                   src={message.image}
@@ -77,7 +81,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
             </div>
           </div>
         ) : (
-          <div className="chat-bubble flex flex-col">
+          <div className="chat-bubble bg-base-200 text-base-content flex flex-col">
             {message.image && (
               <ChatImage
                 src={message.image}
@@ -108,7 +112,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

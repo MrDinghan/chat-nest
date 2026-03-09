@@ -26,7 +26,7 @@ const ChatImage = ({ src, slides, index, pending }: Props) => {
           className={`block w-full rounded-md ${pending ? "" : "cursor-pointer"}`}
           loading="lazy"
           onLoad={() => setLoaded(true)}
-          onClick={pending ? undefined : () => setOpen(true)}
+          onClick={pending ? void 0 : () => setOpen(true)}
         />
         {pending && loaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md">

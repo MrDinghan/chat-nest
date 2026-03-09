@@ -66,10 +66,7 @@ const SettingsPage = () => {
                     <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-medium">
                       J
                     </div>
-                    <div>
-                      <h3 className="font-medium text-sm">John Doe</h3>
-                      <p className="text-xs text-base-content/70">Online</p>
-                    </div>
+                    <h3 className="font-medium text-sm">John Doe</h3>
                   </div>
                 </div>
 
@@ -93,7 +90,7 @@ const SettingsPage = () => {
                             ${message.isSent ? "text-primary-content/70" : "text-base-content/70"}
                           `}
                         >
-                          12:00 PM
+                          14:00
                         </p>
                       </div>
                     </div>

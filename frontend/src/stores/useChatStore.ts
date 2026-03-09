@@ -28,6 +28,10 @@ interface ChatState {
   updateMessageReactions: (messageId: string, reactions: ReactionDto[]) => void;
   selectedUser?: OmitUserResponseDtoPassword;
   setSelectedUser: (user?: OmitUserResponseDtoPassword) => void;
+  pendingScrollToMessageId: string | null;
+  setPendingScrollToMessageId: (id: string | null) => void;
+  highlightedMessageId: string | null;
+  setHighlightedMessageId: (id: string | null) => void;
   subscribeToMessages: () => () => void;
   unsubscribeFromMessages: () => void;
   unreadIncomingCount: number;
@@ -73,7 +77,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
       ),
     })),
   selectedUser: void 0,
-  setSelectedUser: (user) => set({ selectedUser: user }),
+  setSelectedUser: (user) =>
+    set({ selectedUser: user, pendingScrollToMessageId: null, highlightedMessageId: null }),
+  pendingScrollToMessageId: null,
+  setPendingScrollToMessageId: (id) => set({ pendingScrollToMessageId: id }),
+  highlightedMessageId: null,
+  setHighlightedMessageId: (id) => set({ highlightedMessageId: id }),
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
 

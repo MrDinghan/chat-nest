@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
-import { UserResponseDto } from "./user.response.dto";
+import { BaseDocumentDto } from "./base.response.dto";
+import { IUserDTO } from "./user.dto";
 
-const userSchema = new mongoose.Schema<UserResponseDto>(
+const userSchema = new mongoose.Schema<IUserDTO & BaseDocumentDto>(
   {
     email: { type: String, required: true, unique: true },
     fullname: { type: String, required: true },

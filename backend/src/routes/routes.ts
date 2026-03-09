@@ -22,11 +22,16 @@ const models: TsoaRoute.Models = {
     "LastMessageDto": {
         "dataType": "refObject",
         "properties": {
-            "text": {"dataType":"string"},
-            "image": {"dataType":"string"},
-            "createdAt": {"dataType":"string"},
+            "text": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+            "image": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+            "createdAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Pick_IUserDTO.Exclude_keyofIUserDTO.password__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UserResponseDto": {
@@ -37,9 +42,8 @@ const models: TsoaRoute.Models = {
             "updatedAt": {"dataType":"string","required":true},
             "email": {"dataType":"string","required":true},
             "fullname": {"dataType":"string","required":true},
-            "password": {"dataType":"string","required":true},
             "profilePic": {"dataType":"string"},
-            "lastMessage": {"ref":"LastMessageDto"},
+            "lastMessage": {"dataType":"union","subSchemas":[{"ref":"LastMessageDto"},{"dataType":"undefined"}]},
             "unreadCount": {"dataType":"double"},
         },
         "additionalProperties": false,
@@ -75,6 +79,20 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SearchMessageResultDto": {
+        "dataType": "refObject",
+        "properties": {
+            "_id": {"dataType":"string","required":true},
+            "createdAt": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"string","required":true},
+            "text": {"dataType":"string","required":true},
+            "senderId": {"dataType":"string","required":true},
+            "receiverId": {"dataType":"string","required":true},
+            "otherUser": {"ref":"UserResponseDto","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "IUserDTO": {
         "dataType": "refObject",
         "properties": {
@@ -88,12 +106,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Pick_IUserDTO.email-or-password_": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"password":{"dataType":"string","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"email":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Pick_UserResponseDto.Exclude_keyofUserResponseDto.password__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"lastMessage":{"ref":"LastMessageDto"},"unreadCount":{"dataType":"double"},"_id":{"dataType":"string","required":true},"createdAt":{"dataType":"string","required":true},"updatedAt":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"fullname":{"dataType":"string","required":true},"profilePic":{"dataType":"string"},"lastMessage":{"ref":"LastMessageDto"},"unreadCount":{"dataType":"double"},"_id":{"dataType":"string","required":true},"createdAt":{"dataType":"string","required":true},"updatedAt":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Omit_UserResponseDto.password_": {
@@ -203,6 +221,38 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'markRead',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMessageController_search: Record<string, TsoaRoute.ParameterSchema> = {
+                q: {"in":"query","name":"q","required":true,"dataType":"string"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/message/search',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(MessageController)),
+            ...(fetchMiddlewares<RequestHandler>(MessageController.prototype.search)),
+
+            async function MessageController_search(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMessageController_search, request, response });
+
+                const controller = new MessageController();
+
+              await templateService.apiHandler({
+                methodName: 'search',
                 controller,
                 response,
                 next,

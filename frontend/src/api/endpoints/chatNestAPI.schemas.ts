@@ -12,6 +12,18 @@ export interface LastMessageDto {
   createdAt?: string;
 }
 
+/**
+ * From T, pick a set of properties whose keys are in the union K
+ */
+export interface PickIUserDTOExcludeKeyofIUserDTOPassword {
+  /** User email */
+  email: string;
+  /** User fullname */
+  fullname: string;
+  /** User profile picture */
+  profilePic?: string;
+}
+
 export interface UserResponseDto {
   /** MongoDB Object ID */
   _id: string;
@@ -21,8 +33,6 @@ export interface UserResponseDto {
   email: string;
   /** User fullname */
   fullname: string;
-  /** User password */
-  password: string;
   /** User profile picture */
   profilePic?: string;
   lastMessage?: LastMessageDto;
@@ -53,6 +63,17 @@ export interface MessageResponseDto {
   reactions: ReactionDto[];
 }
 
+export interface SearchMessageResultDto {
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+  text: string;
+  senderId: string;
+  receiverId: string;
+  otherUser: UserResponseDto;
+}
+
 export interface IUserDTO {
   /** User email */
   email: string;
@@ -68,10 +89,10 @@ export interface IUserDTO {
  * From T, pick a set of properties whose keys are in the union K
  */
 export interface PickIUserDTOEmailOrPassword {
-  /** User email */
-  email: string;
   /** User password */
   password: string;
+  /** User email */
+  email: string;
 }
 
 /**
@@ -80,16 +101,16 @@ export interface PickIUserDTOEmailOrPassword {
 export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
   /** User email */
   email: string;
+  /** User fullname */
+  fullname: string;
+  /** User profile picture */
+  profilePic?: string;
   lastMessage?: LastMessageDto;
   unreadCount?: number;
   /** MongoDB Object ID */
   _id: string;
   createdAt: string;
   updatedAt: string;
-  /** User fullname */
-  fullname: string;
-  /** User profile picture */
-  profilePic?: string;
 }
 
 /**
@@ -109,6 +130,10 @@ export type MarkRead200 = typeof MarkRead200[keyof typeof MarkRead200] | null;
 
 export const MarkRead200 = {
 } as const;
+
+export type SearchParams = {
+q: string;
+};
 
 export type PostMessageBody = {
   text?: string;

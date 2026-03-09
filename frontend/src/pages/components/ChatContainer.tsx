@@ -30,6 +30,7 @@ const ChatContainer: FC = () => {
     subscribeToMessages,
     unreadIncomingCount,
     firstUnreadIndex,
+    highlightedMessageId,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const { mutate: sendMessage } = usePostMessage();
@@ -161,6 +162,7 @@ const ChatContainer: FC = () => {
                     imageSlides={imageSlides}
                     onRetry={handleRetry}
                     isFirstUnread={vItem.index === firstUnreadIndex}
+                    isHighlighted={message._id === highlightedMessageId}
                   />
                 </div>
               );

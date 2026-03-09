@@ -16,8 +16,14 @@ export function useScrollManager({
   selectedUserId,
   scrollToIndex,
 }: UseScrollManagerParams) {
-  const { addIncomingUnread, clearIncomingUnread, setFirstUnreadIndex } =
-    useChatStore();
+  const {
+    addIncomingUnread,
+    clearIncomingUnread,
+    setFirstUnreadIndex,
+    pendingScrollToMessageId,
+    setPendingScrollToMessageId,
+    setHighlightedMessageId,
+  } = useChatStore();
   const { authUser } = useAuthStore();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -102,6 +108,30 @@ export function useScrollManager({
     setFirstUnreadIndex,
     addIncomingUnread,
   ]);
+
+  useEffect(() => {
+    if (!pendingScrollToMessageId || !messages?.length) return;
+
+    const idx = messages.findIndex((m) => m._id === pendingScrollToMessageId);
+    if (idx === -1) return;
+
+    scrollToIndex(idx, { align: "center" });
+    setHighlightedMessageId(pendingScrollToMessageId);
+    setPendingScrollToMessageId(null);
+  }, [
+    pendingScrollToMessageId,
+    messages,
+    scrollToIndex,
+    setHighlightedMessageId,
+    setPendingScrollToMessageId,
+  ]);
+
+  const { highlightedMessageId } = useChatStore();
+  useEffect(() => {
+    if (!highlightedMessageId) return;
+    const timer = setTimeout(() => setHighlightedMessageId(null), 1500);
+    return () => clearTimeout(timer);
+  }, [highlightedMessageId, setHighlightedMessageId]);
 
   return { scrollContainerRef, bottomSentinelRef };
 }
