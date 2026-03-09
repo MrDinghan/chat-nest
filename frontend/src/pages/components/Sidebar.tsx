@@ -78,7 +78,7 @@ const Sidebar: FC = () => {
       </div>
 
       {/* Mobile search bar, hidden on PC */}
-      <div className="px-3 pb-2 lg:hidden">
+      <div className="px-3 pt-2 lg:hidden">
         <SearchBar />
       </div>
 
