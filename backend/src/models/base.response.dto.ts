@@ -7,9 +7,9 @@ export interface BaseDocumentDto {
   /**
    * @example "2023-10-01T00:00:00.000Z"
    */
-  createdAt: string;
+  createdAt: Date | string;
   /**
    * @example "2023-10-01T00:00:00.000Z"
    */
-  updatedAt: string;
+  updatedAt: Date | string;
 }

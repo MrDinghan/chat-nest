@@ -21,7 +21,7 @@ import {
   SearchMessageResultDto,
 } from "@/models/message.response.dto";
 import User from "@/models/user.model";
-import { UserResponseDto } from "@/models/user.response.dto";
+import { UserResponseDtoWithLastMessage } from "@/models/user.response.dto";
 import { HttpStatus } from "@/types/HttpStatus";
 
 import { BaseController } from "./base-controller";
@@ -33,7 +33,7 @@ export class MessageController extends BaseController {
   @Get("getUsersListWithoutCurrentUser")
   public async getUsersList(
     @Request() req: ExpressRequest,
-  ): Promise<UserResponseDto[]> {
+  ): Promise<UserResponseDtoWithLastMessage[]> {
     const currentUser = req.user!;
     const userId = currentUser._id;
 
@@ -68,7 +68,7 @@ export class MessageController extends BaseController {
         {
           text: m.lastText,
           image: m.lastImage,
-          createdAt: m.lastAt?.toISOString(),
+          createdAt: m.lastAt,
         },
       ]),
     );
@@ -92,6 +92,7 @@ export class MessageController extends BaseController {
     );
     const enrichedUsers = users.map((u) => ({
       ...u,
+      _id: u._id.toString(),
       lastMessage: lastMsgMap.get(u._id.toString()),
       unreadCount: unreadMap.get(u._id.toString()) ?? 0,
     }));

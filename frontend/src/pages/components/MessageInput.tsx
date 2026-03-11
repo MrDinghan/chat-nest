@@ -3,6 +3,7 @@ import { type FC, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import TextareaAutosize from "react-textarea-autosize";
 
+import { sendGroupMessage } from "@/api/endpoints/group";
 import { getGetUsersListQueryKey, postMessage } from "@/api/endpoints/message";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -15,6 +16,9 @@ const MessageInput: FC = () => {
     setMessages,
     replaceMessage,
     markMessageFailed,
+    selectedGroup,
+    groupMessages,
+    setGroupMessages,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const [text, setText] = useState("");
@@ -44,7 +48,27 @@ const MessageInput: FC = () => {
     e.preventDefault();
     if (!text.trim() && !imageFile) return;
 
-    // optimistic update
+    if (selectedGroup) {
+      // group message (no optimistic update for simplicity)
+      const prevText = text.trim();
+      const prevImageFile = imageFile;
+      const prevImagePreview = imagePreview;
+      setText("");
+      setImagePreview(void 0);
+      setImageFile(void 0);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      sendGroupMessage(selectedGroup._id, {
+        text: prevText || undefined,
+        image: prevImageFile,
+      }).then((newMsg) => {
+        if (prevImagePreview) URL.revokeObjectURL(prevImagePreview);
+        setGroupMessages([...groupMessages, newMsg]);
+      });
+      return;
+    }
+
+    // DM: optimistic update
     const tempId = `temp_${Date.now()}`;
     const optimisticMsg = {
       _id: tempId,
@@ -88,7 +112,7 @@ const MessageInput: FC = () => {
     setText("");
     removeImage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser?._id]);
+  }, [selectedUser?._id, selectedGroup?._id]);
 
   return (
     <div className="p-4 w-full">
@@ -98,7 +122,7 @@ const MessageInput: FC = () => {
             <img
               src={imagePreview}
               alt="Preview"
-              className="w-20 h-20 object-cover rounded-lg border border-zinc-700"
+              className="w-20 h-20 object-cover rounded-lg border border-base-300"
             />
             <button
               onClick={removeImage}
@@ -138,7 +162,7 @@ const MessageInput: FC = () => {
 
           <button
             type="button"
-            className={`sm:flex btn btn-circle ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
+            className={`sm:flex btn btn-circle ${imagePreview ? "text-success" : "text-base-content/40"}`}
             onClick={() => fileInputRef.current?.click()}
           >
             <Image size={20} />

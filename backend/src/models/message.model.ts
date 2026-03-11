@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
-import { MessageResponseDto } from "./message.response.dto";
+import { IMessageDTO } from "./message.dto";
 
-const messageSchema = new mongoose.Schema<MessageResponseDto>(
+const messageSchema = new mongoose.Schema<IMessageDTO>(
   {
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -29,6 +29,6 @@ const messageSchema = new mongoose.Schema<MessageResponseDto>(
   },
 );
 
-const Message = mongoose.model<MessageResponseDto>("Message", messageSchema);
+const Message = mongoose.model("Message", messageSchema);
 
 export default Message;

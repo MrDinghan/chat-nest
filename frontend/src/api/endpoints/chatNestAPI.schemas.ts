@@ -21,30 +21,34 @@ export interface PickIUserDTOExcludeKeyofIUserDTOPassword {
   /** User fullname */
   fullname: string;
   /** User profile picture */
-  profilePic?: string;
-}
-
-export interface UserResponseDto {
+  profilePic: string;
   /** MongoDB Object ID */
   _id: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UserResponseDtoWithLastMessage {
   /** User email */
   email: string;
   /** User fullname */
   fullname: string;
   /** User profile picture */
-  profilePic?: string;
+  profilePic: string;
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
   lastMessage?: LastMessageDto;
   unreadCount?: number;
 }
+
+export type MongooseTypesObjectId = string;
 
 export interface ReactionDto {
   emoji: string;
   userId: string;
 }
-
-export type MongooseTypesObjectId = string;
 
 export interface MessageResponseDto {
   /** MongoDB Object ID */
@@ -63,18 +67,82 @@ export interface MessageResponseDto {
   reactions: ReactionDto[];
 }
 
+/**
+ * From T, pick a set of properties whose keys are in the union K
+ */
+export interface PickIUserDTOFullnameOrProfilePic {
+  /** User fullname */
+  fullname: string;
+  /** User profile picture */
+  profilePic: string;
+}
+
 export interface SearchMessageResultDto {
+  /** Message content */
+  text: string;
+  /** Sender's user ID */
+  senderId: MongooseTypesObjectId;
+  /** Receiver's user ID */
+  receiverId: MongooseTypesObjectId;
+  otherUser: PickIUserDTOFullnameOrProfilePic;
+}
+
+export interface GroupLastMessageDto {
+  text?: string;
+  image?: string;
+  createdAt?: string;
+  senderName?: string;
+}
+
+export type GroupMemberDto = PickIUserDTOFullnameOrProfilePic;
+
+export interface GroupResponseDto {
   /** MongoDB Object ID */
   _id: string;
   createdAt: string;
   updatedAt: string;
-  text: string;
-  senderId: string;
-  receiverId: string;
-  otherUser: UserResponseDto;
+  name: string;
+  avatar?: string;
+  ownerId: MongooseTypesObjectId;
+  members: PickIUserDTOFullnameOrProfilePic[];
+  lastMessage?: GroupLastMessageDto;
+}
+
+export interface CreateGroupBody {
+  name: string;
+  memberIds: string[];
+}
+
+export interface GroupMessageResponseDto {
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+  groupId: MongooseTypesObjectId;
+  senderId: MongooseTypesObjectId;
+  text?: string;
+  image?: string;
+  sender: PickIUserDTOFullnameOrProfilePic;
+}
+
+export interface UserResponseDto {
+  /** User email */
+  email: string;
+  /** User fullname */
+  fullname: string;
+  /** User profile picture */
+  profilePic: string;
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IUserDTO {
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
   /** User email */
   email: string;
   /** User fullname */
@@ -104,9 +172,7 @@ export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
   /** User fullname */
   fullname: string;
   /** User profile picture */
-  profilePic?: string;
-  lastMessage?: LastMessageDto;
-  unreadCount?: number;
+  profilePic: string;
   /** MongoDB Object ID */
   _id: string;
   createdAt: string;
@@ -136,6 +202,24 @@ q: string;
 };
 
 export type PostMessageBody = {
+  text?: string;
+  image?: Blob;
+};
+
+/**
+ * @nullable
+ */
+export type DissolveGroup200 = typeof DissolveGroup200[keyof typeof DissolveGroup200] | null;
+
+
+export const DissolveGroup200 = {
+} as const;
+
+export type UpdateGroupAvatarBody = {
+  image?: Blob;
+};
+
+export type SendGroupMessageBody = {
   text?: string;
   image?: Blob;
 };

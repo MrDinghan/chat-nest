@@ -10,9 +10,10 @@ import Sidebar from "./components/Sidebar";
 import { useNotificationSocket } from "./hooks/useNotificationSocket";
 
 const HomePage: FC = () => {
-  const { selectedUser } = useChatStore();
+  const { selectedUser, selectedGroup } = useChatStore();
   const { authUser } = useAuthStore();
   const authPic = authUser?.profilePic;
+  const hasSelected = !!(selectedUser || selectedGroup);
 
   useNotificationSocket();
 
@@ -35,15 +36,15 @@ const HomePage: FC = () => {
           <div className="flex h-full rounded-lg overflow-hidden">
             <div
               className={
-                selectedUser ? "hidden lg:block" : "block w-full lg:w-auto"
+                hasSelected ? "hidden lg:block" : "block w-full lg:w-auto"
               }
             >
               <Sidebar />
             </div>
             <div
-              className={`flex-1 flex ${!selectedUser ? "hidden lg:flex" : ""}`}
+              className={`flex-1 flex ${!hasSelected ? "hidden lg:flex" : ""}`}
             >
-              {!selectedUser ? <NoChatSelected /> : <ChatContainer />}
+              {!hasSelected ? <NoChatSelected /> : <ChatContainer />}
             </div>
           </div>
         </div>

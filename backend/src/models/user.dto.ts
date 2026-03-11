@@ -1,4 +1,6 @@
-export interface IUserDTO {
+import { BaseDocumentDto } from "./base.response.dto";
+
+export interface IUserDTO extends BaseDocumentDto {
   /**
    * User email
    * @example "user@example.com"
@@ -18,5 +20,5 @@ export interface IUserDTO {
    * User profile picture
    * @example "https://example.com/profile.jpg"
    */
-  profilePic?: string;
+  profilePic: string | undefined;
 }

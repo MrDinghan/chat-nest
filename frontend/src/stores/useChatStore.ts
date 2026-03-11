@@ -1,10 +1,13 @@
 import { create } from "zustand";
 
 import type {
+  GroupMessageResponseDto,
+  GroupResponseDto,
   MessageResponseDto,
   OmitUserResponseDtoPassword,
   ReactionDto,
 } from "@/api/endpoints/chatNestAPI.schemas";
+import { getGetGroupListQueryKey } from "@/api/endpoints/group";
 import { getGetUsersListQueryKey } from "@/api/endpoints/message";
 import { queryClient } from "@/lib/queryClient";
 
@@ -17,6 +20,12 @@ export type ChatMessage = MessageResponseDto & {
   _retryFile?: File;
 };
 
+export type GroupChatMessage = GroupMessageResponseDto & {
+  clientId?: string;
+  pending?: boolean;
+  failed?: boolean;
+};
+
 interface ChatState {
   messages: ChatMessage[];
   setMessages: (messages: ChatMessage[]) => void;
@@ -26,14 +35,25 @@ interface ChatState {
   markMessagePending: (id: string) => void;
   markMessagesReadByIds: (ids: string[]) => void;
   updateMessageReactions: (messageId: string, reactions: ReactionDto[]) => void;
+
+  groupMessages: GroupChatMessage[];
+  setGroupMessages: (messages: GroupChatMessage[]) => void;
+
   selectedUser?: OmitUserResponseDtoPassword;
   setSelectedUser: (user?: OmitUserResponseDtoPassword) => void;
+
+  selectedGroup?: GroupResponseDto;
+  setSelectedGroup: (group?: GroupResponseDto) => void;
+
   pendingScrollToMessageId: string | null;
   setPendingScrollToMessageId: (id: string | null) => void;
   highlightedMessageId: string | null;
   setHighlightedMessageId: (id: string | null) => void;
+
   subscribeToMessages: () => () => void;
+  subscribeToGroupMessages: () => () => void;
   unsubscribeFromMessages: () => void;
+
   unreadIncomingCount: number;
   firstUnreadIndex: number;
   addIncomingUnread: (index: number) => void;
@@ -76,13 +96,34 @@ export const useChatStore = create<ChatState>((set, get) => ({
         m._id === messageId ? { ...m, reactions } : m,
       ),
     })),
+
+  groupMessages: [],
+  setGroupMessages: (groupMessages) => set({ groupMessages }),
+
   selectedUser: void 0,
   setSelectedUser: (user) =>
-    set({ selectedUser: user, pendingScrollToMessageId: null, highlightedMessageId: null }),
+    set({
+      selectedUser: user,
+      selectedGroup: void 0,
+      pendingScrollToMessageId: null,
+      highlightedMessageId: null,
+    }),
+
+  selectedGroup: void 0,
+  setSelectedGroup: (group) =>
+    set({
+      selectedGroup: group,
+      selectedUser: void 0,
+      pendingScrollToMessageId: null,
+      highlightedMessageId: null,
+      groupMessages: [],
+    }),
+
   pendingScrollToMessageId: null,
   setPendingScrollToMessageId: (id) => set({ pendingScrollToMessageId: id }),
   highlightedMessageId: null,
   setHighlightedMessageId: (id) => set({ highlightedMessageId: id }),
+
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
 
@@ -116,6 +157,49 @@ export const useChatStore = create<ChatState>((set, get) => ({
       socket?.off("reactionUpdated", reactionHandler);
     };
   },
+
+  subscribeToGroupMessages: () => {
+    const socket = useAuthStore.getState().socket;
+
+    const newGroupMessageHandler = (newMessage: GroupMessageResponseDto) => {
+      const { selectedGroup } = get();
+      if (newMessage.groupId !== selectedGroup?._id) return;
+      set({ groupMessages: [...get().groupMessages, newMessage] });
+    };
+
+    const groupDissolvedHandler = ({ groupId }: { groupId: string }) => {
+      queryClient.invalidateQueries({ queryKey: getGetGroupListQueryKey() });
+      const { selectedGroup, setSelectedGroup } = get();
+      if (selectedGroup?._id === groupId) {
+        setSelectedGroup(void 0);
+      }
+    };
+
+    const groupUpdatedHandler = (group: GroupResponseDto) => {
+      queryClient.invalidateQueries({ queryKey: getGetGroupListQueryKey() });
+      const { selectedGroup, setSelectedGroup } = get();
+      if (selectedGroup?._id === group._id) {
+        setSelectedGroup(group);
+      }
+    };
+
+    const groupCreatedHandler = () => {
+      queryClient.invalidateQueries({ queryKey: getGetGroupListQueryKey() });
+    };
+
+    socket?.on("newGroupMessage", newGroupMessageHandler);
+    socket?.on("groupDissolved", groupDissolvedHandler);
+    socket?.on("groupUpdated", groupUpdatedHandler);
+    socket?.on("groupCreated", groupCreatedHandler);
+
+    return () => {
+      socket?.off("newGroupMessage", newGroupMessageHandler);
+      socket?.off("groupDissolved", groupDissolvedHandler);
+      socket?.off("groupUpdated", groupUpdatedHandler);
+      socket?.off("groupCreated", groupCreatedHandler);
+    };
+  },
+
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket?.off("newMessage");

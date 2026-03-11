@@ -31,7 +31,7 @@ import type {
   PostMessageBody,
   SearchMessageResultDto,
   SearchParams,
-  UserResponseDto
+  UserResponseDtoWithLastMessage
 } from './chatNestAPI.schemas';
 
 import { request } from '../request';
@@ -50,9 +50,9 @@ export const getGetUsersListUrl = () => {
   return `/api/message/getUsersListWithoutCurrentUser`
 }
 
-export const getUsersList = async ( options?: RequestInit): Promise<UserResponseDto[]> => {
+export const getUsersList = async ( options?: RequestInit): Promise<UserResponseDtoWithLastMessage[]> => {
   
-  return request<UserResponseDto[]>(getGetUsersListUrl(),
+  return request<UserResponseDtoWithLastMessage[]>(getGetUsersListUrl(),
   {      
     ...options,
     method: 'GET'

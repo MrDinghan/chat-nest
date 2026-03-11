@@ -77,13 +77,13 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
   return (
     <div ref={containerRef} className={`relative ${className ?? ""}`}>
       <div className="flex items-center gap-2 bg-base-200 rounded-lg px-3 py-1.5">
-        <Search className="w-4 h-4 text-zinc-400 shrink-0" />
+        <Search className="w-4 h-4 text-base-content/40 shrink-0" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search users or messages..."
-          className="bg-transparent outline-none w-full placeholder:text-zinc-400 text-base"
+          className="bg-transparent outline-none w-full placeholder:text-base-content/40 text-base"
         />
         {query && (
           <button
@@ -91,7 +91,7 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
               setQuery("");
             }}
           >
-            <X className="w-4 h-4 text-zinc-400" />
+            <X className="w-4 h-4 text-base-content/40" />
           </button>
         )}
       </div>
@@ -99,14 +99,14 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
       {isOpen && (
         <div className="absolute top-full mt-1 left-0 right-0 bg-base-100 border border-base-300 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
           {!hasResults ? (
-            <div className="px-4 py-3 text-sm text-zinc-500 text-center">
+            <div className="px-4 py-3 text-sm text-base-content/50 text-center">
               No results
             </div>
           ) : (
             <>
               {userResults.length > 0 && (
                 <div>
-                  <div className="px-3 py-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-base-200">
+                  <div className="px-3 py-1.5 text-xs font-semibold text-base-content/50 uppercase tracking-wide border-b border-base-200">
                     Users
                   </div>
                   {userResults.map((user) => (
@@ -130,7 +130,7 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
 
               {(messageResults?.length ?? 0) > 0 && (
                 <div>
-                  <div className="px-3 py-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wide border-b border-base-200">
+                  <div className="px-3 py-1.5 text-xs font-semibold text-base-content/50 uppercase tracking-wide border-b border-base-200">
                     Messages
                   </div>
                   {messageResults!.map((msg) => (
@@ -151,10 +151,10 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
                         <div className="text-sm font-medium truncate">
                           {msg.otherUser.fullname}
                         </div>
-                        <div className="text-xs text-zinc-400 truncate">
+                        <div className="text-xs text-base-content/40 truncate">
                           {msg.text}
                         </div>
-                        <div className="text-xs text-zinc-400/70 mt-0.5">
+                        <div className="text-xs text-base-content/30 mt-0.5">
                           {formatChatTime(msg.createdAt, true)}
                         </div>
                       </div>

@@ -1,9 +1,9 @@
-import { UserResponseDto } from "@/models/user.response.dto";
+import { IUserDTO } from "@/models/user.dto";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: Omit<UserResponseDto, "password">;
+      user?: Omit<IUserDTO, "password">;
     }
   }
 }

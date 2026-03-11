@@ -16,6 +16,8 @@ interface MessageBubbleProps {
   onRetry: (message: ChatMessage) => void;
   isFirstUnread: boolean;
   isHighlighted?: boolean;
+  showSenderInfo?: { name: string; pic: string };
+  isGroupMessage?: boolean;
 }
 
 const MessageBubble: FC<MessageBubbleProps> = ({
@@ -27,6 +29,8 @@ const MessageBubble: FC<MessageBubbleProps> = ({
   onRetry,
   isFirstUnread,
   isHighlighted,
+  showSenderInfo,
+  isGroupMessage,
 }) => {
   const isMine = message.senderId === authUserId;
 
@@ -47,19 +51,26 @@ const MessageBubble: FC<MessageBubbleProps> = ({
         <div className="chat-image avatar">
           <div className="size-10 rounded-full border">
             <img
-              src={isMine ? authUserPic || "/avatar.png" : selectedUserPic || "/avatar.png"}
+              src={
+                isMine
+                  ? authUserPic || "/avatar.png"
+                  : showSenderInfo?.pic || selectedUserPic || "/avatar.png"
+              }
               alt="profile pic"
             />
           </div>
         </div>
         <div className="chat-header mb-1">
+          {showSenderInfo && !isMine && (
+            <span className="text-xs font-medium mr-1">{showSenderInfo.name}</span>
+          )}
           <time className="text-xs opacity-50 ml-1">
             {formatChatTime(message.createdAt, true)}
           </time>
         </div>
         {isMine ? (
           <div className="flex items-end gap-1.5 justify-end">
-            {!message.pending && !message.failed && (
+            {!message.pending && !message.failed && !isGroupMessage && (
               <div className="shrink-0 mb-1">
                 {message.isRead ? (
                   <CheckCircle2 size={14} className="text-success" strokeWidth={2} />
@@ -102,7 +113,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
               <AlertCircle size={12} /> Failed to send. Click to retry.
             </button>
           )}
-          {!message.pending && (
+          {!message.pending && !isGroupMessage && (
             <MessageReactions
               messageId={message._id}
               reactions={message.reactions ?? []}

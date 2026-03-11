@@ -1,6 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { type FC, useCallback, useEffect } from "react";
 
+import { useGetGroupMessages } from "@/api/endpoints/group";
 import {
   getGetUsersListQueryKey,
   useGetMessages,
@@ -28,6 +29,10 @@ const ChatContainer: FC = () => {
     markMessageFailed,
     markMessagePending,
     subscribeToMessages,
+    subscribeToGroupMessages,
+    selectedGroup,
+    groupMessages,
+    setGroupMessages,
     unreadIncomingCount,
     firstUnreadIndex,
     highlightedMessageId,
@@ -35,12 +40,31 @@ const ChatContainer: FC = () => {
   const { authUser } = useAuthStore();
   const { mutate: sendMessage } = usePostMessage();
 
-  const { data: messagesData, isLoading: isMessagesLoading } = useGetMessages(
+  const { data: messagesData, isLoading: isDmLoading } = useGetMessages(
     selectedUser?._id ?? "",
+    { query: { enabled: !!selectedUser } },
   );
 
+  const { data: groupMessagesData, isLoading: isGroupLoading } =
+    useGetGroupMessages(selectedGroup?._id ?? "", {
+      query: { enabled: !!selectedGroup },
+    });
+
+  const isMessagesLoading = selectedGroup ? isGroupLoading : isDmLoading;
+
+  // Unified message list for virtualizer
+  const displayMessages = selectedGroup
+    ? groupMessages.map((m) => ({
+        ...m,
+        // adapt GroupChatMessage to match virtualizer expectations
+        receiverId: m.groupId,
+        isRead: true,
+        reactions: [],
+      }))
+    : messages;
+
   const virtualizer = useVirtualizer({
-    count: messages?.length ?? 0,
+    count: displayMessages?.length ?? 0,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 80,
     overscan: 5,
@@ -48,16 +72,20 @@ const ChatContainer: FC = () => {
   });
 
   const { scrollContainerRef, bottomSentinelRef } = useScrollManager({
-    messages,
-    selectedUserId: selectedUser?._id,
+    messages: displayMessages,
+    selectedUserId: selectedUser?._id ?? selectedGroup?._id,
     scrollToIndex: virtualizer.scrollToIndex,
   });
 
   const { observerRef } = useMarkRead(selectedUser?._id);
 
   useEffect(() => {
-    setMessages(messagesData ?? []);
-  }, [messagesData, setMessages]);
+    if (selectedUser) setMessages(messagesData ?? []);
+  }, [messagesData, setMessages, selectedUser]);
+
+  useEffect(() => {
+    if (selectedGroup) setGroupMessages(groupMessagesData ?? []);
+  }, [groupMessagesData, setGroupMessages, selectedGroup]);
 
   useEffect(() => {
     if (messagesData && selectedUser?._id) {
@@ -66,8 +94,12 @@ const ChatContainer: FC = () => {
   }, [messagesData, selectedUser?._id]);
 
   useEffect(() => {
-    return subscribeToMessages();
-  }, [subscribeToMessages, selectedUser?._id]);
+    if (selectedUser) return subscribeToMessages();
+  }, [subscribeToMessages, selectedUser]);
+
+  useEffect(() => {
+    if (selectedGroup) return subscribeToGroupMessages();
+  }, [subscribeToGroupMessages, selectedGroup]);
 
   const handleRetry = useCallback(
     (message: ChatMessage) => {
@@ -114,9 +146,13 @@ const ChatContainer: FC = () => {
     );
   }
 
-  const imageSlides = (messages ?? [])
-    .filter((m) => m.image && !m.pending && !m.failed)
-    .map((m) => ({ src: m.image! }));
+  const imageSlides = selectedGroup
+    ? groupMessages
+        .filter((m) => m.image && !m.pending && !m.failed)
+        .map((m) => ({ src: m.image! }))
+    : (messages ?? [])
+        .filter((m) => m.image && !m.pending && !m.failed)
+        .map((m) => ({ src: m.image! }));
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -128,7 +164,11 @@ const ChatContainer: FC = () => {
             style={{ height: virtualizer.getTotalSize(), position: "relative" }}
           >
             {virtualizer.getVirtualItems().map((vItem) => {
-              const message = messages![vItem.index];
+              const message = displayMessages![vItem.index];
+              const groupMsg = selectedGroup
+                ? groupMessages[vItem.index]
+                : undefined;
+
               return (
                 <div
                   key={message.clientId ?? message._id}
@@ -137,6 +177,7 @@ const ChatContainer: FC = () => {
                     virtualizer.measureElement(el);
                     if (
                       el &&
+                      !selectedGroup &&
                       message.senderId !== authUser?._id &&
                       !message.isRead &&
                       !message.pending &&
@@ -163,6 +204,17 @@ const ChatContainer: FC = () => {
                     onRetry={handleRetry}
                     isFirstUnread={vItem.index === firstUnreadIndex}
                     isHighlighted={message._id === highlightedMessageId}
+                    showSenderInfo={
+                      selectedGroup &&
+                      groupMsg &&
+                      groupMsg.senderId !== authUser?._id
+                        ? {
+                            name: groupMsg.sender.fullname,
+                            pic: groupMsg.sender.profilePic ?? "",
+                          }
+                        : undefined
+                    }
+                    isGroupMessage={!!selectedGroup}
                   />
                 </div>
               );
@@ -171,7 +223,7 @@ const ChatContainer: FC = () => {
           <div ref={bottomSentinelRef} />
         </div>
 
-        {unreadIncomingCount > 0 && (
+        {!selectedGroup && unreadIncomingCount > 0 && (
           <NewMessageBanner
             count={unreadIncomingCount}
             onClick={handleScrollToUnread}
