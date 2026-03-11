@@ -2,22 +2,23 @@ import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
 import type { FC } from "react";
 
 import { formatChatTime } from "@/lib/utils";
-import type { ChatMessage } from "@/stores/useChatStore";
+import type { ConversationMessage } from "@/types/conversation";
 
 import ChatImage from "./ChatImage";
 import MessageReactions from "./MessageReactions";
 
 interface MessageBubbleProps {
-  message: ChatMessage;
+  message: ConversationMessage;
   authUserId: string;
   authUserPic: string;
   selectedUserPic: string;
   imageSlides: { src: string }[];
-  onRetry: (message: ChatMessage) => void;
+  onRetry: (message: ConversationMessage) => void;
   isFirstUnread: boolean;
   isHighlighted?: boolean;
   showSenderInfo?: { name: string; pic: string };
-  isGroupMessage?: boolean;
+  isGroupChat?: boolean;
+  groupId?: string;
 }
 
 const MessageBubble: FC<MessageBubbleProps> = ({
@@ -30,9 +31,11 @@ const MessageBubble: FC<MessageBubbleProps> = ({
   isFirstUnread,
   isHighlighted,
   showSenderInfo,
-  isGroupMessage,
+  isGroupChat,
+  groupId,
 }) => {
   const isMine = message.senderId === authUserId;
+  const readCount = isGroupChat ? (message.readBy?.filter((id) => id !== authUserId).length ?? 0) : 0;
 
   return (
     <div
@@ -70,12 +73,18 @@ const MessageBubble: FC<MessageBubbleProps> = ({
         </div>
         {isMine ? (
           <div className="flex items-end gap-1.5 justify-end">
-            {!message.pending && !message.failed && !isGroupMessage && (
+            {!message.pending && !message.failed && (
               <div className="shrink-0 mb-1">
-                {message.isRead ? (
-                  <CheckCircle2 size={14} className="text-success" strokeWidth={2} />
+                {isGroupChat ? (
+                  readCount > 0 ? (
+                    <span className="text-xs text-base-content/40">{readCount} read</span>
+                  ) : null
                 ) : (
-                  <Circle size={14} className="text-base-content/30" strokeWidth={1.5} />
+                  message.isRead ? (
+                    <CheckCircle2 size={14} className="text-success" strokeWidth={2} />
+                  ) : (
+                    <Circle size={14} className="text-base-content/30" strokeWidth={1.5} />
+                  )
                 )}
               </div>
             )}
@@ -113,12 +122,13 @@ const MessageBubble: FC<MessageBubbleProps> = ({
               <AlertCircle size={12} /> Failed to send. Click to retry.
             </button>
           )}
-          {!message.pending && !isGroupMessage && (
+          {!message.pending && (
             <MessageReactions
               messageId={message._id}
               reactions={message.reactions ?? []}
               authUserId={authUserId}
               isMine={isMine}
+              groupId={groupId}
             />
           )}
         </div>

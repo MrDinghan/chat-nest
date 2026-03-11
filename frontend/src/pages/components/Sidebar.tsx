@@ -32,10 +32,12 @@ const Sidebar: FC = () => {
     socket.on("newMessage", handler);
     socket.on("newGroupMessage", handler);
     socket.on("groupCreated", handler);
+    socket.on("groupMessagesRead", handler);
     return () => {
       socket.off("newMessage", handler);
       socket.off("newGroupMessage", handler);
       socket.off("groupCreated", handler);
+      socket.off("groupMessagesRead", handler);
     };
   }, [socket]);
 
@@ -154,6 +156,11 @@ const Sidebar: FC = () => {
                       alt={group.name}
                       className="size-12 object-cover rounded-full"
                     />
+                    {(group.unreadCount ?? 0) > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-primary text-primary-content text-xs flex items-center justify-center font-medium">
+                        {group.unreadCount! > 99 ? "99+" : group.unreadCount}
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-1 min-w-0 items-start justify-between gap-1 text-left">
                     <div className="flex-1 min-w-0">

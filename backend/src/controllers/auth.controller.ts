@@ -14,7 +14,7 @@ import {
 
 import cloudinary from "@/lib/cloudinary";
 import { generateToken } from "@/lib/utils";
-import { IUserDTO } from "@/models/user.dto";
+import { IUser } from "@/models/user.dto";
 import User from "@/models/user.model";
 import { UserResponseDto } from "@/models/user.response.dto";
 import { HttpStatus } from "@/types/HttpStatus";
@@ -26,7 +26,7 @@ import { BaseController } from "./base-controller";
 export class AuthController extends BaseController {
   @Post("signup")
   public async signup(
-    @Body() body: IUserDTO,
+    @Body() body: IUser,
     @Request() req: ExpressRequest,
   ): Promise<UserResponseDto> {
     const { email, fullname, password, profilePic } = body;
@@ -60,7 +60,7 @@ export class AuthController extends BaseController {
 
   @Post("login")
   public async login(
-    @Body() body: Pick<IUserDTO, "email" | "password">,
+    @Body() body: Pick<IUser, "email" | "password">,
     @Request() req: ExpressRequest,
   ): Promise<UserResponseDto> {
     const { email, password } = body;
@@ -125,7 +125,7 @@ export class AuthController extends BaseController {
   @Get("checkAuth")
   public async checkAuth(
     @Request() req: ExpressRequest,
-  ): Promise<Omit<UserResponseDto, "password">> {
+  ): Promise<UserResponseDto> {
     const currentUser = req.user!;
     return this.success(currentUser);
   }

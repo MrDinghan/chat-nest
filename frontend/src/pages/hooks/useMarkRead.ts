@@ -1,5 +1,6 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 
+import { markGroupMessagesRead } from "@/api/endpoints/group";
 import { getGetMessagesQueryKey, getGetUsersListQueryKey, markRead } from "@/api/endpoints/message";
 import { queryClient } from "@/lib/queryClient";
 import { useChatStore } from "@/stores/useChatStore";
@@ -8,9 +9,13 @@ interface UseMarkReadReturn {
   observerRef: RefObject<IntersectionObserver | null>;
 }
 
-export function useMarkRead(
-  selectedUserId: string | undefined,
-): UseMarkReadReturn {
+export function useMarkRead({
+  userId,
+  groupId,
+}: {
+  userId?: string;
+  groupId?: string;
+}): UseMarkReadReturn {
   const { markMessagesReadByIds } = useChatStore();
 
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -21,14 +26,19 @@ export function useMarkRead(
     const ids = [...pendingReadRef.current];
     if (ids.length === 0) return;
     pendingReadRef.current.clear();
-    markRead({ messageIds: ids }).then(() => {
-      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
-      if (selectedUserId) {
-        queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey(selectedUserId) });
-      }
-    });
-    markMessagesReadByIds(ids);
-  }, [markMessagesReadByIds, selectedUserId]);
+
+    if (groupId) {
+      markGroupMessagesRead(groupId, { messageIds: ids });
+    } else {
+      markRead({ messageIds: ids }).then(() => {
+        queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
+        if (userId) {
+          queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey(userId) });
+        }
+      });
+      markMessagesReadByIds(ids);
+    }
+  }, [markMessagesReadByIds, userId, groupId]);
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -53,7 +63,7 @@ export function useMarkRead(
       if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
       flushMarkRead();
     };
-  }, [selectedUserId, flushMarkRead]);
+  }, [userId, groupId, flushMarkRead]);
 
   return { observerRef };
 }

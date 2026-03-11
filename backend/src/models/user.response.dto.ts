@@ -12,10 +12,7 @@ export interface LastMessageDto {
 
 export interface UserResponseDto extends Omit<IUserDTO, "password"> {}
 
-export interface UserResponseDtoWithLastMessage extends Omit<
-  IUserDTO,
-  "password"
-> {
+export interface UserResponseDtoWithLastMessage extends UserResponseDto {
   lastMessage: LastMessageDto | undefined;
   unreadCount: number | undefined;
 }

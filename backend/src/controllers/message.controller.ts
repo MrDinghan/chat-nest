@@ -189,7 +189,7 @@ export class MessageController extends BaseController {
           localField: "otherUserId",
           foreignField: "_id",
           as: "otherUserArr",
-          pipeline: [{ $project: { _id: 1, fullname: 1, profilePic: 1 } }],
+          pipeline: [{ $project: { password: 0 } }],
         },
       },
       {

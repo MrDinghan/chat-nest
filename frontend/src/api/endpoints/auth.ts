@@ -25,10 +25,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  IUserDTO,
+  IUser,
   Logout200,
-  PickIUserDTOEmailOrPassword,
-  PickUserResponseDtoExcludeKeyofUserResponseDtoPassword,
+  PickIUserEmailOrPassword,
   UpdateProfileBody,
   UserResponseDto
 } from './chatNestAPI.schemas';
@@ -49,7 +48,7 @@ export const getSignupUrl = () => {
   return `/api/auth/signup`
 }
 
-export const signup = async (iUserDTO: IUserDTO, options?: RequestInit): Promise<UserResponseDto> => {
+export const signup = async (iUser: IUser, options?: RequestInit): Promise<UserResponseDto> => {
   
   return request<UserResponseDto>(getSignupUrl(),
   {      
@@ -57,7 +56,7 @@ export const signup = async (iUserDTO: IUserDTO, options?: RequestInit): Promise
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      iUserDTO,)
+      iUser,)
   }
 );}
 
@@ -65,8 +64,8 @@ export const signup = async (iUserDTO: IUserDTO, options?: RequestInit): Promise
 
 
 export const getSignupMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUserDTO}, TContext>, request?: SecondParameter<typeof request>}
-): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUserDTO}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUser}, TContext>, request?: SecondParameter<typeof request>}
+): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUser}, TContext> => {
 
 const mutationKey = ['signup'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -78,7 +77,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signup>>, {data: IUserDTO}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signup>>, {data: IUser}> = (props) => {
           const {data} = props ?? {};
 
           return  signup(data,requestOptions)
@@ -92,15 +91,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SignupMutationResult = NonNullable<Awaited<ReturnType<typeof signup>>>
-    export type SignupMutationBody = IUserDTO
+    export type SignupMutationBody = IUser
     export type SignupMutationError = unknown
 
     export const useSignup = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUserDTO}, TContext>, request?: SecondParameter<typeof request>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: IUser}, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof signup>>,
         TError,
-        {data: IUserDTO},
+        {data: IUser},
         TContext
       > => {
       return useMutation(getSignupMutationOptions(options), queryClient);
@@ -113,7 +112,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/api/auth/login`
 }
 
-export const login = async (pickIUserDTOEmailOrPassword: PickIUserDTOEmailOrPassword, options?: RequestInit): Promise<UserResponseDto> => {
+export const login = async (pickIUserEmailOrPassword: PickIUserEmailOrPassword, options?: RequestInit): Promise<UserResponseDto> => {
   
   return request<UserResponseDto>(getLoginUrl(),
   {      
@@ -121,7 +120,7 @@ export const login = async (pickIUserDTOEmailOrPassword: PickIUserDTOEmailOrPass
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      pickIUserDTOEmailOrPassword,)
+      pickIUserEmailOrPassword,)
   }
 );}
 
@@ -129,8 +128,8 @@ export const login = async (pickIUserDTOEmailOrPassword: PickIUserDTOEmailOrPass
 
 
 export const getLoginMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserDTOEmailOrPassword}, TContext>, request?: SecondParameter<typeof request>}
-): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserDTOEmailOrPassword}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserEmailOrPassword}, TContext>, request?: SecondParameter<typeof request>}
+): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserEmailOrPassword}, TContext> => {
 
 const mutationKey = ['login'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -142,7 +141,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: PickIUserDTOEmailOrPassword}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: PickIUserEmailOrPassword}> = (props) => {
           const {data} = props ?? {};
 
           return  login(data,requestOptions)
@@ -156,15 +155,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
-    export type LoginMutationBody = PickIUserDTOEmailOrPassword
+    export type LoginMutationBody = PickIUserEmailOrPassword
     export type LoginMutationError = unknown
 
     export const useLogin = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserDTOEmailOrPassword}, TContext>, request?: SecondParameter<typeof request>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PickIUserEmailOrPassword}, TContext>, request?: SecondParameter<typeof request>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof login>>,
         TError,
-        {data: PickIUserDTOEmailOrPassword},
+        {data: PickIUserEmailOrPassword},
         TContext
       > => {
       return useMutation(getLoginMutationOptions(options), queryClient);
@@ -306,9 +305,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/api/auth/checkAuth`
 }
 
-export const checkAuth = async ( options?: RequestInit): Promise<PickUserResponseDtoExcludeKeyofUserResponseDtoPassword> => {
+export const checkAuth = async ( options?: RequestInit): Promise<UserResponseDto> => {
   
-  return request<PickUserResponseDtoExcludeKeyofUserResponseDtoPassword>(getCheckAuthUrl(),
+  return request<UserResponseDto>(getCheckAuthUrl(),
   {      
     ...options,
     method: 'GET'

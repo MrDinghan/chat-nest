@@ -16,6 +16,13 @@ const groupMessageSchema = new mongoose.Schema<GroupMessageDto>(
     },
     text: { type: String },
     image: { type: String },
+    reactions: [
+      {
+        emoji: { type: String, required: true },
+        userId: { type: String, required: true },
+      },
+    ],
+    readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true },
 );

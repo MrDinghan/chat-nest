@@ -1,17 +1,15 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { type FC, useCallback, useEffect } from "react";
 
-import { useGetGroupMessages } from "@/api/endpoints/group";
-import {
-  getGetUsersListQueryKey,
-  useGetMessages,
-  usePostMessage,
-} from "@/api/endpoints/message";
+import { sendGroupMessage } from "@/api/endpoints/group";
+import { getGetUsersListQueryKey, usePostMessage } from "@/api/endpoints/message";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
-import type { ChatMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
+import type { ConversationMessage } from "@/types/conversation";
+import { normalizeGroupMessage } from "@/types/conversation";
 
+import { useConversationMessages } from "../hooks/useConversationMessages";
 import { useMarkRead } from "../hooks/useMarkRead";
 import { useScrollManager } from "../hooks/useScrollManager";
 import ChatHeader from "./ChatHeader";
@@ -29,10 +27,7 @@ const ChatContainer: FC = () => {
     markMessageFailed,
     markMessagePending,
     subscribeToMessages,
-    subscribeToGroupMessages,
     selectedGroup,
-    groupMessages,
-    setGroupMessages,
     unreadIncomingCount,
     firstUnreadIndex,
     highlightedMessageId,
@@ -40,31 +35,12 @@ const ChatContainer: FC = () => {
   const { authUser } = useAuthStore();
   const { mutate: sendMessage } = usePostMessage();
 
-  const { data: messagesData, isLoading: isDmLoading } = useGetMessages(
-    selectedUser?._id ?? "",
-    { query: { enabled: !!selectedUser } },
-  );
+  const { messages: fetchedMessages, isLoading } = useConversationMessages();
 
-  const { data: groupMessagesData, isLoading: isGroupLoading } =
-    useGetGroupMessages(selectedGroup?._id ?? "", {
-      query: { enabled: !!selectedGroup },
-    });
-
-  const isMessagesLoading = selectedGroup ? isGroupLoading : isDmLoading;
-
-  // Unified message list for virtualizer
-  const displayMessages = selectedGroup
-    ? groupMessages.map((m) => ({
-        ...m,
-        // adapt GroupChatMessage to match virtualizer expectations
-        receiverId: m.groupId,
-        isRead: true,
-        reactions: [],
-      }))
-    : messages;
+  const activeId = selectedUser?._id ?? selectedGroup?._id;
 
   const virtualizer = useVirtualizer({
-    count: displayMessages?.length ?? 0,
+    count: messages.length,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 80,
     overscan: 5,
@@ -72,55 +48,62 @@ const ChatContainer: FC = () => {
   });
 
   const { scrollContainerRef, bottomSentinelRef } = useScrollManager({
-    messages: displayMessages,
-    selectedUserId: selectedUser?._id ?? selectedGroup?._id,
+    messages,
+    selectedUserId: activeId,
     scrollToIndex: virtualizer.scrollToIndex,
   });
 
-  const { observerRef } = useMarkRead(selectedUser?._id);
+  const { observerRef } = useMarkRead({
+    userId: selectedUser?._id,
+    groupId: selectedGroup?._id,
+  });
 
   useEffect(() => {
-    if (selectedUser) setMessages(messagesData ?? []);
-  }, [messagesData, setMessages, selectedUser]);
+    setMessages(fetchedMessages);
+  }, [fetchedMessages, setMessages]);
 
   useEffect(() => {
-    if (selectedGroup) setGroupMessages(groupMessagesData ?? []);
-  }, [groupMessagesData, setGroupMessages, selectedGroup]);
-
-  useEffect(() => {
-    if (messagesData && selectedUser?._id) {
+    if (selectedUser?._id) {
       queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
     }
-  }, [messagesData, selectedUser?._id]);
+  }, [fetchedMessages, selectedUser?._id]);
 
-  useEffect(() => {
-    if (selectedUser) return subscribeToMessages();
-  }, [subscribeToMessages, selectedUser]);
-
-  useEffect(() => {
-    if (selectedGroup) return subscribeToGroupMessages();
-  }, [subscribeToGroupMessages, selectedGroup]);
+  useEffect(() => subscribeToMessages(), [subscribeToMessages, activeId]);
 
   const handleRetry = useCallback(
-    (message: ChatMessage) => {
+    (message: ConversationMessage) => {
       markMessagePending(message._id);
-      sendMessage(
-        {
-          id: selectedUser!._id,
-          data: { text: message.text, image: message._retryFile },
-        },
-        {
-          onSuccess: (newMsg) => {
+      if (selectedGroup) {
+        sendGroupMessage(selectedGroup._id, {
+          text: message.text,
+          image: message._retryFile,
+        })
+          .then((newMsg) => {
             if (message.image?.startsWith("blob:"))
               URL.revokeObjectURL(message.image);
-            replaceMessage(message._id, newMsg);
+            replaceMessage(message._id, normalizeGroupMessage(newMsg));
+          })
+          .catch(() => markMessageFailed(message._id));
+      } else {
+        sendMessage(
+          {
+            id: selectedUser!._id,
+            data: { text: message.text, image: message._retryFile },
           },
-          onError: () => markMessageFailed(message._id),
-        },
-      );
+          {
+            onSuccess: (newMsg) => {
+              if (message.image?.startsWith("blob:"))
+                URL.revokeObjectURL(message.image);
+              replaceMessage(message._id, { ...newMsg, senderId: newMsg.senderId, isRead: newMsg.isRead, reactions: newMsg.reactions });
+            },
+            onError: () => markMessageFailed(message._id),
+          },
+        );
+      }
     },
     [
       selectedUser,
+      selectedGroup,
       sendMessage,
       markMessagePending,
       replaceMessage,
@@ -136,7 +119,7 @@ const ChatContainer: FC = () => {
     });
   }, [firstUnreadIndex, virtualizer]);
 
-  if (isMessagesLoading) {
+  if (isLoading) {
     return (
       <div className="flex-1 flex flex-col overflow-auto">
         <ChatHeader />
@@ -146,13 +129,9 @@ const ChatContainer: FC = () => {
     );
   }
 
-  const imageSlides = selectedGroup
-    ? groupMessages
-        .filter((m) => m.image && !m.pending && !m.failed)
-        .map((m) => ({ src: m.image! }))
-    : (messages ?? [])
-        .filter((m) => m.image && !m.pending && !m.failed)
-        .map((m) => ({ src: m.image! }));
+  const imageSlides = messages
+    .filter((m) => m.image && !m.pending && !m.failed)
+    .map((m) => ({ src: m.image! }));
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -164,10 +143,16 @@ const ChatContainer: FC = () => {
             style={{ height: virtualizer.getTotalSize(), position: "relative" }}
           >
             {virtualizer.getVirtualItems().map((vItem) => {
-              const message = displayMessages![vItem.index];
-              const groupMsg = selectedGroup
-                ? groupMessages[vItem.index]
-                : undefined;
+              const message = messages[vItem.index];
+              const isUnreadForObserver = selectedGroup
+                ? message.senderId !== authUser?._id &&
+                  !(message.readBy ?? []).includes(authUser!._id) &&
+                  !message.pending &&
+                  !message.failed
+                : message.senderId !== authUser?._id &&
+                  message.isRead === false &&
+                  !message.pending &&
+                  !message.failed;
 
               return (
                 <div
@@ -175,14 +160,7 @@ const ChatContainer: FC = () => {
                   data-index={vItem.index}
                   ref={(el) => {
                     virtualizer.measureElement(el);
-                    if (
-                      el &&
-                      !selectedGroup &&
-                      message.senderId !== authUser?._id &&
-                      !message.isRead &&
-                      !message.pending &&
-                      !message.failed
-                    ) {
+                    if (el && isUnreadForObserver) {
                       el.dataset.msgId = message._id;
                       observerRef.current?.observe(el);
                     }
@@ -205,16 +183,15 @@ const ChatContainer: FC = () => {
                     isFirstUnread={vItem.index === firstUnreadIndex}
                     isHighlighted={message._id === highlightedMessageId}
                     showSenderInfo={
-                      selectedGroup &&
-                      groupMsg &&
-                      groupMsg.senderId !== authUser?._id
+                      selectedGroup && message.sender && message.senderId !== authUser?._id
                         ? {
-                            name: groupMsg.sender.fullname,
-                            pic: groupMsg.sender.profilePic ?? "",
+                            name: message.sender.fullname,
+                            pic: message.sender.profilePic ?? "",
                           }
                         : undefined
                     }
-                    isGroupMessage={!!selectedGroup}
+                    isGroupChat={!!selectedGroup}
+                    groupId={selectedGroup?._id}
                   />
                 </div>
               );
@@ -223,7 +200,7 @@ const ChatContainer: FC = () => {
           <div ref={bottomSentinelRef} />
         </div>
 
-        {!selectedGroup && unreadIncomingCount > 0 && (
+        {unreadIncomingCount > 0 && (
           <NewMessageBanner
             count={unreadIncomingCount}
             onClick={handleScrollToUnread}

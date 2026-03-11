@@ -8,6 +8,7 @@ import { getGetUsersListQueryKey, postMessage } from "@/api/endpoints/message";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
+import { normalizeGroupMessage } from "@/types/conversation";
 
 const MessageInput: FC = () => {
   const {
@@ -17,8 +18,6 @@ const MessageInput: FC = () => {
     replaceMessage,
     markMessageFailed,
     selectedGroup,
-    groupMessages,
-    setGroupMessages,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const [text, setText] = useState("");
@@ -49,22 +48,47 @@ const MessageInput: FC = () => {
     if (!text.trim() && !imageFile) return;
 
     if (selectedGroup) {
-      // group message (no optimistic update for simplicity)
-      const prevText = text.trim();
-      const prevImageFile = imageFile;
+      // group message: optimistic update
+      const tempId = `temp_${Date.now()}`;
+      const optimisticMsg = {
+        _id: tempId,
+        clientId: tempId,
+        pending: true,
+        senderId: authUser!._id,
+        sender: {
+          _id: authUser!._id,
+          fullname: authUser!.fullname,
+          profilePic: authUser?.profilePic,
+        },
+        text: text.trim() || void 0,
+        image: imagePreview,
+        _retryFile: imageFile,
+        reactions: [],
+        readBy: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setMessages([...messages, optimisticMsg]);
+
       const prevImagePreview = imagePreview;
+      const prevImageFile = imageFile;
       setText("");
       setImagePreview(void 0);
       setImageFile(void 0);
       if (fileInputRef.current) fileInputRef.current.value = "";
 
       sendGroupMessage(selectedGroup._id, {
-        text: prevText || undefined,
+        text: optimisticMsg.text,
         image: prevImageFile,
-      }).then((newMsg) => {
-        if (prevImagePreview) URL.revokeObjectURL(prevImagePreview);
-        setGroupMessages([...groupMessages, newMsg]);
-      });
+      })
+        .then((newMsg) => {
+          if (prevImagePreview) URL.revokeObjectURL(prevImagePreview);
+          replaceMessage(tempId, normalizeGroupMessage(newMsg));
+        })
+        .catch(() => {
+          markMessageFailed(tempId);
+        });
       return;
     }
 

@@ -2,11 +2,11 @@ import type { ScrollToOptions } from "@tanstack/react-virtual";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuthStore } from "@/stores/useAuthStore";
-import type { ChatMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
+import type { ConversationMessage } from "@/types/conversation";
 
 interface UseScrollManagerParams {
-  messages: ChatMessage[] | undefined;
+  messages: ConversationMessage[] | undefined;
   selectedUserId: string | undefined;
   scrollToIndex: (index: number, options?: ScrollToOptions) => void;
 }
@@ -68,9 +68,17 @@ export function useScrollManager({
       initDoneRef.current = true;
       prevCountRef.current = messages.length;
 
+      const isUnread = (m: ConversationMessage) =>
+        m.readBy !== undefined
+          ? !m.readBy.includes(authUser!._id)
+          : m.isRead === false;
+
       const firstUnread = messages.findIndex(
         (m) =>
-          m.senderId !== authUser?._id && !m.isRead && !m.pending && !m.failed,
+          m.senderId !== authUser?._id &&
+          isUnread(m) &&
+          !m.pending &&
+          !m.failed,
       );
 
       if (firstUnread >= 0) {

@@ -67,6 +67,39 @@ export interface MessageResponseDto {
   reactions: ReactionDto[];
 }
 
+export interface UserResponseDto {
+  /** User email */
+  email: string;
+  /** User fullname */
+  fullname: string;
+  /** User profile picture */
+  profilePic: string;
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SearchMessageResultDto {
+  /** MongoDB Object ID */
+  _id: string;
+  createdAt: string;
+  /** Message content */
+  text: string;
+  /** Sender's user ID */
+  senderId: MongooseTypesObjectId;
+  /** Receiver's user ID */
+  receiverId: MongooseTypesObjectId;
+  otherUser: UserResponseDto;
+}
+
+export interface GroupLastMessageDto {
+  text?: string;
+  image?: string;
+  createdAt?: string;
+  senderName?: string;
+}
+
 /**
  * From T, pick a set of properties whose keys are in the union K
  */
@@ -75,23 +108,6 @@ export interface PickIUserDTOFullnameOrProfilePic {
   fullname: string;
   /** User profile picture */
   profilePic: string;
-}
-
-export interface SearchMessageResultDto {
-  /** Message content */
-  text: string;
-  /** Sender's user ID */
-  senderId: MongooseTypesObjectId;
-  /** Receiver's user ID */
-  receiverId: MongooseTypesObjectId;
-  otherUser: PickIUserDTOFullnameOrProfilePic;
-}
-
-export interface GroupLastMessageDto {
-  text?: string;
-  image?: string;
-  createdAt?: string;
-  senderName?: string;
 }
 
 export type GroupMemberDto = PickIUserDTOFullnameOrProfilePic;
@@ -106,6 +122,7 @@ export interface GroupResponseDto {
   ownerId: MongooseTypesObjectId;
   members: PickIUserDTOFullnameOrProfilePic[];
   lastMessage?: GroupLastMessageDto;
+  unreadCount?: number;
 }
 
 export interface CreateGroupBody {
@@ -122,27 +139,28 @@ export interface GroupMessageResponseDto {
   senderId: MongooseTypesObjectId;
   text?: string;
   image?: string;
+  reactions: ReactionDto[];
+  readBy: MongooseTypesObjectId[];
   sender: PickIUserDTOFullnameOrProfilePic;
 }
 
-export interface UserResponseDto {
-  /** User email */
-  email: string;
-  /** User fullname */
-  fullname: string;
-  /** User profile picture */
-  profilePic: string;
+export interface SearchGroupMessageResultDto {
   /** MongoDB Object ID */
   _id: string;
+  /** Message content */
+  text?: string;
+  /** Sender's user ID */
+  senderId: string;
+  /** Group ID */
+  groupId: string;
+  /** Group name */
+  groupName: string;
+  /** Sender's full name */
+  senderName: string;
   createdAt: string;
-  updatedAt: string;
 }
 
-export interface IUserDTO {
-  /** MongoDB Object ID */
-  _id: string;
-  createdAt: string;
-  updatedAt: string;
+export interface IUser {
   /** User email */
   email: string;
   /** User fullname */
@@ -156,33 +174,12 @@ export interface IUserDTO {
 /**
  * From T, pick a set of properties whose keys are in the union K
  */
-export interface PickIUserDTOEmailOrPassword {
+export interface PickIUserEmailOrPassword {
   /** User password */
   password: string;
   /** User email */
   email: string;
 }
-
-/**
- * From T, pick a set of properties whose keys are in the union K
- */
-export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
-  /** User email */
-  email: string;
-  /** User fullname */
-  fullname: string;
-  /** User profile picture */
-  profilePic: string;
-  /** MongoDB Object ID */
-  _id: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Construct a type with the properties of T except for those in type K.
- */
-export type OmitUserResponseDtoPassword = PickUserResponseDtoExcludeKeyofUserResponseDtoPassword;
 
 export type MarkReadBody = {
   messageIds: string[];
@@ -217,6 +214,23 @@ export const DissolveGroup200 = {
 
 export type UpdateGroupAvatarBody = {
   image?: Blob;
+};
+
+export type MarkGroupMessagesReadBody = {
+  messageIds: string[];
+};
+
+/**
+ * @nullable
+ */
+export type MarkGroupMessagesRead200 = typeof MarkGroupMessagesRead200[keyof typeof MarkGroupMessagesRead200] | null;
+
+
+export const MarkGroupMessagesRead200 = {
+} as const;
+
+export type SearchGroupMessagesParams = {
+q: string;
 };
 
 export type SendGroupMessageBody = {

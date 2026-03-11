@@ -3,6 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 
 import Group from "@/models/group.model";
+import GroupMessage from "@/models/groupMessage.model";
 import Message from "@/models/message.model";
 
 const app: Express = express();
@@ -51,6 +52,25 @@ io.on("connection", (socket) => {
     if (senderSocketId) io.to(senderSocketId).emit("reactionUpdated", payload);
     if (receiverSocketId) io.to(receiverSocketId).emit("reactionUpdated", payload);
   });
+
+  socket.on(
+    "toggleGroupReaction",
+    async ({ messageId, emoji, groupId }: { messageId: string; emoji: string; groupId: string }) => {
+      const message = await GroupMessage.findById(messageId);
+      if (!message) return;
+
+      const idx = message.reactions.findIndex((r) => r.emoji === emoji && r.userId === userId);
+      if (idx >= 0) {
+        message.reactions.splice(idx, 1);
+      } else {
+        message.reactions.push({ emoji, userId });
+      }
+      await message.save();
+
+      const payload = { messageId, reactions: message.reactions };
+      io.to(`group:${groupId}`).emit("groupReactionUpdated", payload);
+    },
+  );
 
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);

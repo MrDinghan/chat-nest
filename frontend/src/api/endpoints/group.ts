@@ -29,6 +29,10 @@ import type {
   DissolveGroup200,
   GroupMessageResponseDto,
   GroupResponseDto,
+  MarkGroupMessagesRead200,
+  MarkGroupMessagesReadBody,
+  SearchGroupMessageResultDto,
+  SearchGroupMessagesParams,
   SendGroupMessageBody,
   UpdateGroupAvatarBody
 } from './chatNestAPI.schemas';
@@ -412,6 +416,170 @@ export function useGetGroupMessages<TData = Awaited<ReturnType<typeof getGroupMe
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetGroupMessagesQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+export const getMarkGroupMessagesReadUrl = (groupId: string,) => {
+
+
+  
+
+  return `/api/group/${groupId}/messages/markRead`
+}
+
+export const markGroupMessagesRead = async (groupId: string,
+    markGroupMessagesReadBody: MarkGroupMessagesReadBody, options?: RequestInit): Promise<MarkGroupMessagesRead200> => {
+  
+  return request<MarkGroupMessagesRead200>(getMarkGroupMessagesReadUrl(groupId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      markGroupMessagesReadBody,)
+  }
+);}
+
+
+
+
+export const getMarkGroupMessagesReadMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markGroupMessagesRead>>, TError,{groupId: string;data: MarkGroupMessagesReadBody}, TContext>, request?: SecondParameter<typeof request>}
+): UseMutationOptions<Awaited<ReturnType<typeof markGroupMessagesRead>>, TError,{groupId: string;data: MarkGroupMessagesReadBody}, TContext> => {
+
+const mutationKey = ['markGroupMessagesRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markGroupMessagesRead>>, {groupId: string;data: MarkGroupMessagesReadBody}> = (props) => {
+          const {groupId,data} = props ?? {};
+
+          return  markGroupMessagesRead(groupId,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkGroupMessagesReadMutationResult = NonNullable<Awaited<ReturnType<typeof markGroupMessagesRead>>>
+    export type MarkGroupMessagesReadMutationBody = MarkGroupMessagesReadBody
+    export type MarkGroupMessagesReadMutationError = unknown
+
+    export const useMarkGroupMessagesRead = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markGroupMessagesRead>>, TError,{groupId: string;data: MarkGroupMessagesReadBody}, TContext>, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof markGroupMessagesRead>>,
+        TError,
+        {groupId: string;data: MarkGroupMessagesReadBody},
+        TContext
+      > => {
+      return useMutation(getMarkGroupMessagesReadMutationOptions(options), queryClient);
+    }
+    export const getSearchGroupMessagesUrl = (params: SearchGroupMessagesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/group/messages/search?${stringifiedParams}` : `/api/group/messages/search`
+}
+
+export const searchGroupMessages = async (params: SearchGroupMessagesParams, options?: RequestInit): Promise<SearchGroupMessageResultDto[]> => {
+  
+  return request<SearchGroupMessageResultDto[]>(getSearchGroupMessagesUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getSearchGroupMessagesQueryKey = (params?: SearchGroupMessagesParams,) => {
+    return [
+    `/api/group/messages/search`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getSearchGroupMessagesQueryOptions = <TData = Awaited<ReturnType<typeof searchGroupMessages>>, TError = unknown>(params: SearchGroupMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchGroupMessages>>, TError, TData>>, request?: SecondParameter<typeof request>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchGroupMessagesQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchGroupMessages>>> = ({ signal }) => searchGroupMessages(params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchGroupMessages>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SearchGroupMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof searchGroupMessages>>>
+export type SearchGroupMessagesQueryError = unknown
+
+
+export function useSearchGroupMessages<TData = Awaited<ReturnType<typeof searchGroupMessages>>, TError = unknown>(
+ params: SearchGroupMessagesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchGroupMessages>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchGroupMessages>>,
+          TError,
+          Awaited<ReturnType<typeof searchGroupMessages>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchGroupMessages<TData = Awaited<ReturnType<typeof searchGroupMessages>>, TError = unknown>(
+ params: SearchGroupMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchGroupMessages>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchGroupMessages>>,
+          TError,
+          Awaited<ReturnType<typeof searchGroupMessages>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchGroupMessages<TData = Awaited<ReturnType<typeof searchGroupMessages>>, TError = unknown>(
+ params: SearchGroupMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchGroupMessages>>, TError, TData>>, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useSearchGroupMessages<TData = Awaited<ReturnType<typeof searchGroupMessages>>, TError = unknown>(
+ params: SearchGroupMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchGroupMessages>>, TError, TData>>, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSearchGroupMessagesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

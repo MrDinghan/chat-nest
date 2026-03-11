@@ -3,6 +3,9 @@ import { Search, X } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
 
 import type { UserResponseDto } from "@/api/endpoints/chatNestAPI.schemas";
+import type { SearchGroupMessageResultDto } from "@/api/endpoints/chatNestAPI.schemas";
+import { searchGroupMessages } from "@/api/endpoints/group";
+import { useGetGroupList } from "@/api/endpoints/group";
 import { useGetUsersList, useSearch } from "@/api/endpoints/message";
 import { formatChatTime } from "@/lib/utils";
 import { useChatStore } from "@/stores/useChatStore";
@@ -15,8 +18,12 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [groupMessageResults, setGroupMessageResults] = useState<
+    SearchGroupMessageResultDto[]
+  >([]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { setSelectedUser, setPendingScrollToMessageId } = useChatStore();
+  const { setSelectedUser, setPendingScrollToMessageId, setSelectedGroup } =
+    useChatStore();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -28,6 +35,16 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
   useEffect(() => {
     setIsOpen(query.length >= 1);
   }, [query]);
+
+  useEffect(() => {
+    if (debouncedQuery.length < 1) {
+      setGroupMessageResults([]);
+      return;
+    }
+    searchGroupMessages({ q: debouncedQuery })
+      .then(setGroupMessageResults)
+      .catch(() => {});
+  }, [debouncedQuery]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -59,6 +76,7 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
       },
     },
   );
+  const { data: allGroups } = useGetGroupList();
 
   const userResults =
     allUsers?.filter((u) => {
@@ -67,10 +85,21 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
     }) ?? [];
 
   const hasResults =
-    userResults.length > 0 || (messageResults?.length ?? 0) > 0;
+    userResults.length > 0 ||
+    (messageResults?.length ?? 0) > 0 ||
+    groupMessageResults.length > 0;
 
   const handleSelectUser = (user: UserResponseDto) => {
     setSelectedUser(user);
+    setQuery("");
+  };
+
+  const handleSelectGroupMessage = (msg: SearchGroupMessageResultDto) => {
+    const group = allGroups?.find((g) => g._id === msg.groupId);
+    if (group) {
+      setSelectedGroup(group);
+      setPendingScrollToMessageId(msg._id);
+    }
     setQuery("");
   };
 
@@ -153,6 +182,36 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
                         </div>
                         <div className="text-xs text-base-content/40 truncate">
                           {msg.text}
+                        </div>
+                        <div className="text-xs text-base-content/30 mt-0.5">
+                          {formatChatTime(msg.createdAt, true)}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {groupMessageResults.length > 0 && (
+                <div>
+                  <div className="px-3 py-1.5 text-xs font-semibold text-base-content/50 uppercase tracking-wide border-b border-base-200">
+                    Group Messages
+                  </div>
+                  {groupMessageResults.map((msg) => (
+                    <button
+                      key={msg._id}
+                      onClick={() => handleSelectGroupMessage(msg)}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-base-200 transition-colors text-left"
+                    >
+                      <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-sm font-bold text-primary">
+                        {msg.groupName[0]?.toUpperCase() ?? "G"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {msg.groupName}
+                        </div>
+                        <div className="text-xs text-base-content/50 truncate">
+                          {msg.senderName}: {msg.text}
                         </div>
                         <div className="text-xs text-base-content/30 mt-0.5">
                           {formatChatTime(msg.createdAt, true)}

@@ -25,7 +25,7 @@ export class AuthenticationError extends Error {
 export async function expressAuthentication(
   request: Request,
   securityName: string,
-): Promise<Omit<UserResponseDto, "password">> {
+): Promise<UserResponseDto> {
   if (securityName === "jwt") {
     const token = request.cookies?.token;
 

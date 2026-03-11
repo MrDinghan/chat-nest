@@ -8,6 +8,7 @@ import {
   Path,
   Post,
   Put,
+  Query,
   Request,
   Route,
   Security,
@@ -30,6 +31,22 @@ import { BaseController } from "./base-controller";
 interface CreateGroupBody {
   name: string;
   memberIds: string[];
+}
+
+interface SearchGroupMessageResultDto {
+  /** MongoDB Object ID */
+  _id: string;
+  /** Message content */
+  text?: string;
+  /** Sender's user ID */
+  senderId: string;
+  /** Group ID */
+  groupId: string;
+  /** Group name */
+  groupName: string;
+  /** Sender's full name */
+  senderName: string;
+  createdAt: Date | string;
 }
 
 @Tags("Group")
@@ -93,11 +110,30 @@ export class GroupController extends BaseController {
       ]),
     );
 
+    // count unread messages per group (sent by others, not yet in readBy)
+    const unreadAgg = await GroupMessage.aggregate<{
+      _id: string;
+      count: number;
+    }>([
+      {
+        $match: {
+          groupId: { $in: groupIds },
+          senderId: { $ne: userId },
+          readBy: { $ne: userId },
+        },
+      },
+      { $group: { _id: "$groupId", count: { $sum: 1 } } },
+    ]);
+    const unreadMap = new Map(
+      unreadAgg.map((u) => [u._id.toString(), u.count]),
+    );
+
     const enriched = groups.map((g) => {
       const lm = lastMsgMap.get(g._id.toString());
       return {
         ...g,
         lastMessage: lm,
+        unreadCount: unreadMap.get(g._id.toString()) ?? 0,
       };
     });
 
@@ -238,8 +274,103 @@ export class GroupController extends BaseController {
     return this.success(
       messages.map((msg) => ({
         ...msg,
+        _id: msg._id.toString(),
         senderId: msg.senderId._id,
         sender: msg.senderId as unknown as GroupMemberDto,
+      })),
+    );
+  }
+
+  @Security("jwt")
+  @Post("{groupId}/messages/markRead")
+  public async markGroupMessagesRead(
+    @Path() groupId: string,
+    @Body() body: { messageIds: string[] },
+    @Request() req: ExpressRequest,
+  ): Promise<null> {
+    const userId = req.user!._id;
+    const { messageIds } = body;
+
+    await GroupMessage.updateMany(
+      {
+        _id: { $in: messageIds },
+        groupId,
+        readBy: { $ne: userId },
+      },
+      { $addToSet: { readBy: userId } },
+    );
+
+    io.to(`group:${groupId}`).emit("groupMessagesRead", {
+      messageIds,
+      readerId: userId.toString(),
+    });
+
+    return this.success(null);
+  }
+
+  @Security("jwt")
+  @Get("messages/search")
+  public async searchGroupMessages(
+    @Query("q") q: string,
+    @Request() req: ExpressRequest,
+  ): Promise<SearchGroupMessageResultDto[]> {
+    const userId = req.user!._id;
+
+    // Find all groups the user belongs to
+    const userGroups = await Group.find({ members: userId })
+      .select("_id name")
+      .lean();
+    const groupIds = userGroups.map((g) => g._id);
+    const groupNameMap = new Map(
+      userGroups.map((g) => [g._id.toString(), g.name]),
+    );
+
+    const results = await GroupMessage.aggregate<{
+      _id: string;
+      text: string;
+      senderId: string;
+      groupId: string;
+      createdAt: Date;
+      senderFullname: string;
+    }>([
+      {
+        $match: {
+          groupId: { $in: groupIds },
+          text: { $regex: q, $options: "i" },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $limit: 20 },
+      {
+        $lookup: {
+          from: "users",
+          localField: "senderId",
+          foreignField: "_id",
+          as: "senderArr",
+          pipeline: [{ $project: { _id: 0, fullname: 1 } }],
+        },
+      },
+      {
+        $addFields: {
+          senderFullname: { $arrayElemAt: ["$senderArr.fullname", 0] },
+        },
+      },
+      {
+        $project: {
+          senderArr: 0,
+        },
+      },
+    ]);
+
+    return this.success(
+      results.map((r) => ({
+        _id: r._id.toString(),
+        text: r.text,
+        senderId: r.senderId.toString(),
+        groupId: r.groupId.toString(),
+        groupName: groupNameMap.get(r.groupId.toString()) ?? "",
+        senderName: r.senderFullname ?? "",
+        createdAt: r.createdAt,
       })),
     );
   }
@@ -288,6 +419,8 @@ export class GroupController extends BaseController {
       senderId: userId,
       text,
       image: imageUrl,
+      reactions: [],
+      readBy: [],
     });
     await newMessage.save();
 
@@ -302,11 +435,18 @@ export class GroupController extends BaseController {
       text: newMessage.text,
       image: newMessage.image,
       sender: sender!,
+      reactions: [],
+      readBy: [],
       createdAt: newMessage.createdAt,
       updatedAt: newMessage.updatedAt,
     };
 
-    io.to(`group:${id}`).emit("newGroupMessage", result);
+    // Emit to all group members EXCEPT the sender (sender uses optimistic update)
+    const senderSocketId = getReceiverSocketId(userId.toString());
+    const emitter = senderSocketId
+      ? io.to(`group:${id}`).except(senderSocketId)
+      : io.to(`group:${id}`);
+    emitter.emit("newGroupMessage", result);
 
     return this.success(result, void 0, HttpStatus.CREATED);
   }

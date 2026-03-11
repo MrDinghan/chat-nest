@@ -1,11 +1,11 @@
 import { IMessageDTO } from "./message.dto";
-import { IUserDTO } from "./user.dto";
+import { UserResponseDto } from "./user.response.dto";
 
 export interface MessageResponseDto extends IMessageDTO {}
 
 export interface SearchMessageResultDto extends Pick<
   IMessageDTO,
-  "text" | "senderId" | "receiverId"
+  "text" | "senderId" | "receiverId" | "_id" | "createdAt"
 > {
-  otherUser: Pick<IUserDTO, "fullname" | "profilePic">;
+  otherUser: UserResponseDto;
 }

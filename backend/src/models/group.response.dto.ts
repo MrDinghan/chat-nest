@@ -9,4 +9,5 @@ export interface GroupLastMessageDto {
 
 export interface GroupResponseDto extends GroupDto {
   lastMessage: GroupLastMessageDto | undefined;
+  unreadCount?: number;
 }
