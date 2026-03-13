@@ -1,4 +1,4 @@
-import { UserResponseDto } from "@shared/types";
+import type { UserResponseDto } from "@shared/types";
 
 declare global {
   namespace Express {

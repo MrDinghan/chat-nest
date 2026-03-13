@@ -1,4 +1,4 @@
-import { IUser, UserResponseDto } from "@shared/types";
+import type { IUser, UserResponseDto } from "@shared/types";
 import bcrypt from "bcryptjs";
 import { Request as ExpressRequest } from "express";
 import {

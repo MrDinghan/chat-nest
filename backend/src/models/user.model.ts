@@ -1,4 +1,4 @@
-import { IUserSchema } from "@shared/types";
+import type { IUserSchema } from "@shared/types";
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema<IUserSchema>(

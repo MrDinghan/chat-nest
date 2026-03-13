@@ -1,4 +1,4 @@
-import { UserResponseDto } from "@shared/types";
+import type { UserResponseDto } from "@shared/types";
 import { Request } from "express";
 import jwt from "jsonwebtoken";
 

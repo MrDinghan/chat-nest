@@ -1,4 +1,4 @@
-import {
+import type {
   ClientToServerEvents,
   ServerToClientEvents,
 } from "@shared/socket-events";

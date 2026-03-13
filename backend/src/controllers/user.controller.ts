@@ -1,4 +1,4 @@
-import { UserResponseDto } from "@shared/types";
+import type { UserResponseDto } from "@shared/types";
 import { Request as ExpressRequest } from "express";
 import { Get, Request, Route, Security, Tags } from "tsoa";
 

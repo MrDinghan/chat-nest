@@ -1,4 +1,4 @@
-import { IMessageSchema } from "@shared/types";
+import type { IMessageSchema } from "@shared/types";
 import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema<IMessageSchema>(
