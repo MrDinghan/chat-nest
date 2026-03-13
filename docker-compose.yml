@@ -16,6 +16,7 @@ services:
     working_dir: /app
     volumes:
       - ./frontend:/app
+      - ./shared:/shared
       - frontend_dist:/app/dist
     command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile && pnpm build"
 
