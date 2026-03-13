@@ -51,7 +51,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
     if (conversationType === "group") {
       if (allRead) return <CheckCircle2 size={14} className="text-success shrink-0 mb-1" strokeWidth={2} />;
       if (readCount > 0) return <span className="text-xs text-base-content/40 shrink-0 mb-1">{readCount} read</span>;
-      return null;
+      return <Circle size={14} className="text-base-content/30 shrink-0 mb-1" strokeWidth={1.5} />;
     }
 
     return readCount > 0
