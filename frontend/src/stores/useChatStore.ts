@@ -1,20 +1,19 @@
+import type { MessageDto } from "@shared/socket-events";
 import { create } from "zustand";
 
 import type {
-  GroupMessageResponseDto,
-  GroupResponseDto,
-  MessageResponseDto,
+  ConversationResponseDto,
   ReactionDto,
-  UserResponseDto,
 } from "@/api/endpoints/chatNestAPI.schemas";
-import { getGetGroupListQueryKey } from "@/api/endpoints/group";
-import { getGetUsersListQueryKey } from "@/api/endpoints/message";
+import { getGetConversationListQueryKey } from "@/api/endpoints/conversation";
 import { queryClient } from "@/lib/queryClient";
-import type { ConversationMessage } from "@/types/conversation";
-import {
-  normalizeDmMessage,
-  normalizeGroupMessage,
-} from "@/types/conversation";
+
+export type ConversationMessage = MessageDto & {
+  clientId?: string;
+  pending?: boolean;
+  failed?: boolean;
+  _retryFile?: File;
+};
 
 import { useAuthStore } from "./useAuthStore";
 
@@ -25,15 +24,11 @@ interface ChatState {
   removeMessage: (id: string) => void;
   markMessageFailed: (id: string) => void;
   markMessagePending: (id: string) => void;
-  markMessagesReadByIds: (ids: string[]) => void;
   updateMessageReactions: (messageId: string, reactions: ReactionDto[]) => void;
   updateMessageReadBy: (messageIds: string[], readerId: string) => void;
 
-  selectedUser?: UserResponseDto;
-  setSelectedUser: (user?: UserResponseDto) => void;
-
-  selectedGroup?: GroupResponseDto;
-  setSelectedGroup: (group?: GroupResponseDto) => void;
+  selectedConversation?: ConversationResponseDto;
+  setSelectedConversation: (conv?: ConversationResponseDto) => void;
 
   pendingScrollToMessageId: string | null;
   setPendingScrollToMessageId: (id: string | null) => void;
@@ -73,12 +68,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         m._id === id ? { ...m, failed: false, pending: true } : m,
       ),
     }),
-  markMessagesReadByIds: (ids) =>
-    set((s) => ({
-      messages: s.messages.map((m) =>
-        ids.includes(m._id) ? { ...m, isRead: true } : m,
-      ),
-    })),
   updateMessageReactions: (messageId, reactions) =>
     set((s) => ({
       messages: s.messages.map((m) =>
@@ -94,20 +83,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       ),
     })),
 
-  selectedUser: void 0,
-  setSelectedUser: (user) =>
+  selectedConversation: void 0,
+  setSelectedConversation: (conv) =>
     set({
-      selectedUser: user,
-      selectedGroup: void 0,
-      pendingScrollToMessageId: null,
-      highlightedMessageId: null,
-    }),
-
-  selectedGroup: void 0,
-  setSelectedGroup: (group) =>
-    set({
-      selectedGroup: group,
-      selectedUser: void 0,
+      selectedConversation: conv,
       pendingScrollToMessageId: null,
       highlightedMessageId: null,
     }),
@@ -119,16 +98,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
+    const convId = get().selectedConversation?._id;
 
-    const newMessageHandler = (newMessage: MessageResponseDto) => {
-      const { selectedUser } = get();
-      if (newMessage.senderId !== selectedUser?._id) return;
-      set({ messages: [...get().messages, normalizeDmMessage(newMessage)] });
-      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
-    };
-
-    const readHandler = ({ messageIds }: { messageIds: string[] }) => {
-      get().markMessagesReadByIds(messageIds);
+    const newMessageHandler = (newMessage: MessageDto) => {
+      if (newMessage.conversationId !== get().selectedConversation?._id) return;
+      set({ messages: [...get().messages, newMessage] });
+      queryClient.invalidateQueries({
+        queryKey: getGetConversationListQueryKey(),
+      });
     };
 
     const reactionHandler = ({
@@ -141,67 +118,58 @@ export const useChatStore = create<ChatState>((set, get) => ({
       get().updateMessageReactions(messageId, reactions);
     };
 
-    const groupReactionHandler = ({
-      messageId,
-      reactions,
-    }: {
-      messageId: string;
-      reactions: ReactionDto[];
-    }) => {
-      get().updateMessageReactions(messageId, reactions);
-    };
-
-    const groupMessagesReadHandler = ({
+    const messagesReadHandler = ({
       messageIds,
       readerId,
+      conversationId,
     }: {
       messageIds: string[];
       readerId: string;
+      conversationId: string;
     }) => {
+      if (conversationId !== get().selectedConversation?._id) return;
       get().updateMessageReadBy(messageIds, readerId);
     };
 
-    const newGroupMessageHandler = (newMessage: GroupMessageResponseDto) => {
-      const { selectedGroup } = get();
-      if (newMessage.groupId !== selectedGroup?._id) return;
-      set({ messages: [...get().messages, normalizeGroupMessage(newMessage)] });
-    };
-
-    const groupDissolvedHandler = ({ groupId }: { groupId: string }) => {
-      queryClient.invalidateQueries({ queryKey: getGetGroupListQueryKey() });
-      const { selectedGroup, setSelectedGroup } = get();
-      if (selectedGroup?._id === groupId) {
-        setSelectedGroup(void 0);
+    const conversationDissolvedHandler = ({
+      conversationId,
+    }: {
+      conversationId: string;
+    }) => {
+      queryClient.invalidateQueries({
+        queryKey: getGetConversationListQueryKey(),
+      });
+      const { selectedConversation, setSelectedConversation } = get();
+      if (selectedConversation?._id === conversationId) {
+        setSelectedConversation(void 0);
       }
     };
 
-    const groupUpdatedHandler = (group: GroupResponseDto) => {
-      queryClient.invalidateQueries({ queryKey: getGetGroupListQueryKey() });
-      const { selectedGroup, setSelectedGroup } = get();
-      if (selectedGroup?._id === group._id) {
-        setSelectedGroup(group);
+    const conversationUpdatedHandler = (conv: ConversationResponseDto) => {
+      queryClient.invalidateQueries({
+        queryKey: getGetConversationListQueryKey(),
+      });
+      const { selectedConversation, setSelectedConversation } = get();
+      if (selectedConversation?._id === conv._id) {
+        setSelectedConversation(conv);
       }
     };
 
     socket?.on("newMessage", newMessageHandler);
-    socket?.on("messagesRead", readHandler);
     socket?.on("reactionUpdated", reactionHandler);
-    socket?.on("groupReactionUpdated", groupReactionHandler);
-    socket?.on("groupMessagesRead", groupMessagesReadHandler);
-    socket?.on("newGroupMessage", newGroupMessageHandler);
-    socket?.on("groupDissolved", groupDissolvedHandler);
-    socket?.on("groupUpdated", groupUpdatedHandler);
+    socket?.on("messagesRead", messagesReadHandler);
+    socket?.on("conversationDissolved", conversationDissolvedHandler);
+    socket?.on("conversationUpdated", conversationUpdatedHandler);
 
     return () => {
       socket?.off("newMessage", newMessageHandler);
-      socket?.off("messagesRead", readHandler);
       socket?.off("reactionUpdated", reactionHandler);
-      socket?.off("groupReactionUpdated", groupReactionHandler);
-      socket?.off("groupMessagesRead", groupMessagesReadHandler);
-      socket?.off("newGroupMessage", newGroupMessageHandler);
-      socket?.off("groupDissolved", groupDissolvedHandler);
-      socket?.off("groupUpdated", groupUpdatedHandler);
+      socket?.off("messagesRead", messagesReadHandler);
+      socket?.off("conversationDissolved", conversationDissolvedHandler);
+      socket?.off("conversationUpdated", conversationUpdatedHandler);
     };
+
+    void convId; // suppress unused warning
   },
 
   unsubscribeFromMessages: () => {

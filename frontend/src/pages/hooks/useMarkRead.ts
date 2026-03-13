@@ -1,8 +1,6 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 
-import { markGroupMessagesRead } from "@/api/endpoints/group";
-import { getGetMessagesQueryKey, getGetUsersListQueryKey, markRead } from "@/api/endpoints/message";
-import { queryClient } from "@/lib/queryClient";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
 interface UseMarkReadReturn {
@@ -10,13 +8,12 @@ interface UseMarkReadReturn {
 }
 
 export function useMarkRead({
-  userId,
-  groupId,
+  conversationId,
 }: {
-  userId?: string;
-  groupId?: string;
+  conversationId?: string;
 }): UseMarkReadReturn {
-  const { markMessagesReadByIds } = useChatStore();
+  const socket = useAuthStore((s) => s.socket);
+  const { updateMessageReadBy } = useChatStore();
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const pendingReadRef = useRef<Set<string>>(new Set());
@@ -24,21 +21,18 @@ export function useMarkRead({
 
   const flushMarkRead = useCallback(() => {
     const ids = [...pendingReadRef.current];
-    if (ids.length === 0) return;
+    if (ids.length === 0 || !conversationId) return;
     pendingReadRef.current.clear();
 
-    if (groupId) {
-      markGroupMessagesRead(groupId, { messageIds: ids });
-    } else {
-      markRead({ messageIds: ids }).then(() => {
-        queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
-        if (userId) {
-          queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey(userId) });
-        }
-      });
-      markMessagesReadByIds(ids);
+    // Emit via socket
+    socket?.emit("markRead", { messageIds: ids, conversationId });
+
+    // Optimistically update local state
+    const authUser = useAuthStore.getState().authUser;
+    if (authUser) {
+      updateMessageReadBy(ids, authUser._id);
     }
-  }, [markMessagesReadByIds, userId, groupId]);
+  }, [socket, conversationId, updateMessageReadBy]);
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -63,7 +57,7 @@ export function useMarkRead({
       if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
       flushMarkRead();
     };
-  }, [userId, groupId, flushMarkRead]);
+  }, [conversationId, flushMarkRead]);
 
   return { observerRef };
 }

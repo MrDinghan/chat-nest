@@ -1,3 +1,4 @@
+import { IUser, UserResponseDto } from "@shared/types";
 import bcrypt from "bcryptjs";
 import { Request as ExpressRequest } from "express";
 import {
@@ -14,9 +15,7 @@ import {
 
 import cloudinary from "@/lib/cloudinary";
 import { generateToken } from "@/lib/utils";
-import { IUser } from "@/models/user.dto";
 import User from "@/models/user.model";
-import { UserResponseDto } from "@/models/user.response.dto";
 import { HttpStatus } from "@/types/HttpStatus";
 
 import { BaseController } from "./base-controller";

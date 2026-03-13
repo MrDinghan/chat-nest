@@ -1,13 +1,10 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { type FC, useCallback, useEffect } from "react";
 
-import { sendGroupMessage } from "@/api/endpoints/group";
-import { getGetUsersListQueryKey, usePostMessage } from "@/api/endpoints/message";
-import { queryClient } from "@/lib/queryClient";
+import { uploadImage } from "@/api/endpoints/conversation";
 import { useAuthStore } from "@/stores/useAuthStore";
+import type { ConversationMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
-import type { ConversationMessage } from "@/types/conversation";
-import { normalizeGroupMessage } from "@/types/conversation";
 
 import { useConversationMessages } from "../hooks/useConversationMessages";
 import { useMarkRead } from "../hooks/useMarkRead";
@@ -20,24 +17,20 @@ import MessageSkeleton from "./skeletons/MessageSkeleton";
 
 const ChatContainer: FC = () => {
   const {
-    selectedUser,
+    selectedConversation,
     messages,
     setMessages,
     replaceMessage,
     markMessageFailed,
     markMessagePending,
     subscribeToMessages,
-    selectedGroup,
     unreadIncomingCount,
     firstUnreadIndex,
     highlightedMessageId,
   } = useChatStore();
-  const { authUser } = useAuthStore();
-  const { mutate: sendMessage } = usePostMessage();
+  const { authUser, socket } = useAuthStore();
 
   const { messages: fetchedMessages, isLoading } = useConversationMessages();
-
-  const activeId = selectedUser?._id ?? selectedGroup?._id;
 
   const virtualizer = useVirtualizer({
     count: messages.length,
@@ -49,62 +42,59 @@ const ChatContainer: FC = () => {
 
   const { scrollContainerRef, bottomSentinelRef } = useScrollManager({
     messages,
-    selectedUserId: activeId,
+    selectedUserId: selectedConversation?._id,
     scrollToIndex: virtualizer.scrollToIndex,
   });
 
   const { observerRef } = useMarkRead({
-    userId: selectedUser?._id,
-    groupId: selectedGroup?._id,
+    conversationId: selectedConversation?._id,
   });
 
   useEffect(() => {
     setMessages(fetchedMessages);
   }, [fetchedMessages, setMessages]);
 
-  useEffect(() => {
-    if (selectedUser?._id) {
-      queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
-    }
-  }, [fetchedMessages, selectedUser?._id]);
-
-  useEffect(() => subscribeToMessages(), [subscribeToMessages, activeId]);
+  useEffect(
+    () => subscribeToMessages(),
+    [subscribeToMessages, selectedConversation?._id],
+  );
 
   const handleRetry = useCallback(
-    (message: ConversationMessage) => {
+    async (message: ConversationMessage) => {
+      if (!selectedConversation) return;
       markMessagePending(message._id);
-      if (selectedGroup) {
-        sendGroupMessage(selectedGroup._id, {
-          text: message.text,
-          image: message._retryFile,
-        })
-          .then((newMsg) => {
+
+      try {
+        let imageUrl: string | undefined;
+        if (message._retryFile) {
+          const result = await uploadImage({ image: message._retryFile });
+          imageUrl = result.imageUrl;
+        }
+
+        socket?.emit(
+          "sendMessage",
+          {
+            conversationId: selectedConversation._id,
+            text: message.text,
+            imageUrl,
+          },
+          (result) => {
             if (message.image?.startsWith("blob:"))
               URL.revokeObjectURL(message.image);
-            replaceMessage(message._id, normalizeGroupMessage(newMsg));
-          })
-          .catch(() => markMessageFailed(message._id));
-      } else {
-        sendMessage(
-          {
-            id: selectedUser!._id,
-            data: { text: message.text, image: message._retryFile },
-          },
-          {
-            onSuccess: (newMsg) => {
-              if (message.image?.startsWith("blob:"))
-                URL.revokeObjectURL(message.image);
-              replaceMessage(message._id, { ...newMsg, senderId: newMsg.senderId, isRead: newMsg.isRead, reactions: newMsg.reactions });
-            },
-            onError: () => markMessageFailed(message._id),
+            if ("error" in result) {
+              markMessageFailed(message._id);
+            } else {
+              replaceMessage(message._id, result);
+            }
           },
         );
+      } catch {
+        markMessageFailed(message._id);
       }
     },
     [
-      selectedUser,
-      selectedGroup,
-      sendMessage,
+      selectedConversation,
+      socket,
       markMessagePending,
       replaceMessage,
       markMessageFailed,
@@ -133,6 +123,12 @@ const ChatContainer: FC = () => {
     .filter((m) => m.image && !m.pending && !m.failed)
     .map((m) => ({ src: m.image! }));
 
+  const conversationType = selectedConversation?.type ?? "dm";
+  const otherMember =
+    conversationType === "dm"
+      ? selectedConversation?.members.find((m) => m._id !== authUser?._id)
+      : null;
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <ChatHeader />
@@ -144,15 +140,11 @@ const ChatContainer: FC = () => {
           >
             {virtualizer.getVirtualItems().map((vItem) => {
               const message = messages[vItem.index];
-              const isUnreadForObserver = selectedGroup
-                ? message.senderId !== authUser?._id &&
-                  !(message.readBy ?? []).includes(authUser!._id) &&
-                  !message.pending &&
-                  !message.failed
-                : message.senderId !== authUser?._id &&
-                  message.isRead === false &&
-                  !message.pending &&
-                  !message.failed;
+              const isUnreadForObserver =
+                message.senderId !== authUser?._id &&
+                !(message.readBy ?? []).includes(authUser!._id) &&
+                !message.pending &&
+                !message.failed;
 
               return (
                 <div
@@ -177,21 +169,21 @@ const ChatContainer: FC = () => {
                     message={message}
                     authUserId={authUser!._id}
                     authUserPic={authUser?.profilePic ?? ""}
-                    selectedUserPic={selectedUser?.profilePic ?? ""}
+                    otherPic={otherMember?.profilePic ?? ""}
                     imageSlides={imageSlides}
                     onRetry={handleRetry}
                     isFirstUnread={vItem.index === firstUnreadIndex}
                     isHighlighted={message._id === highlightedMessageId}
                     showSenderInfo={
-                      selectedGroup && message.sender && message.senderId !== authUser?._id
+                      conversationType === "group" &&
+                      message.senderId !== authUser?._id
                         ? {
-                            name: message.sender.fullname,
-                            pic: message.sender.profilePic ?? "",
+                            name: message.sender?.fullname ?? "",
+                            pic: message.sender?.profilePic ?? "",
                           }
-                        : undefined
+                        : void 0
                     }
-                    isGroupChat={!!selectedGroup}
-                    groupId={selectedGroup?._id}
+                    conversationType={conversationType}
                   />
                 </div>
               );

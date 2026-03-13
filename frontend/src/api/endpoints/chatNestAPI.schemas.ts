@@ -5,169 +5,128 @@
  * API for ChatNest chat application
  * OpenAPI spec version: 1.0.0
  */
-export interface LastMessageDto {
-  text?: string;
-  image?: string;
-  /** Timestamp of the last message */
-  createdAt?: string;
-}
-
 /**
  * From T, pick a set of properties whose keys are in the union K
  */
-export interface PickIUserDTOExcludeKeyofIUserDTOPassword {
-  /** User email */
+export interface PickIUserSchemaExcludeKeyofIUserSchemaPassword {
   email: string;
-  /** User fullname */
   fullname: string;
-  /** User profile picture */
-  profilePic: string;
-  /** MongoDB Object ID */
+  profilePic?: string;
   _id: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface UserResponseDtoWithLastMessage {
-  /** User email */
-  email: string;
-  /** User fullname */
-  fullname: string;
-  /** User profile picture */
-  profilePic: string;
-  /** MongoDB Object ID */
-  _id: string;
-  createdAt: string;
-  updatedAt: string;
-  lastMessage?: LastMessageDto;
-  unreadCount?: number;
-}
+/**
+ * Construct a type with the properties of T except for those in type K.
+ */
+export type OmitIUserSchemaPassword = PickIUserSchemaExcludeKeyofIUserSchemaPassword;
 
-export type MongooseTypesObjectId = string;
+/**
+ * GET /user/list response (without password)
+ */
+export type UserResponseDto = PickIUserSchemaExcludeKeyofIUserSchemaPassword;
 
-export interface ReactionDto {
-  emoji: string;
-  userId: string;
-}
-
-export interface MessageResponseDto {
-  /** MongoDB Object ID */
-  _id: string;
-  createdAt: string;
-  updatedAt: string;
-  /** Message content */
-  text?: string;
-  /** Message image URL */
-  image?: string;
-  /** Sender's user ID */
-  senderId: MongooseTypesObjectId;
-  /** Receiver's user ID */
-  receiverId: MongooseTypesObjectId;
-  isRead: boolean;
-  reactions: ReactionDto[];
-}
-
-export interface UserResponseDto {
-  /** User email */
-  email: string;
-  /** User fullname */
-  fullname: string;
-  /** User profile picture */
-  profilePic: string;
-  /** MongoDB Object ID */
-  _id: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SearchMessageResultDto {
-  /** MongoDB Object ID */
-  _id: string;
-  createdAt: string;
-  /** Message content */
-  text: string;
-  /** Sender's user ID */
-  senderId: MongooseTypesObjectId;
-  /** Receiver's user ID */
-  receiverId: MongooseTypesObjectId;
-  otherUser: UserResponseDto;
-}
-
-export interface GroupLastMessageDto {
+export interface ConversationLastMessageDto {
   text?: string;
   image?: string;
   createdAt?: string;
   senderName?: string;
 }
 
+export type ConversationType = typeof ConversationType[keyof typeof ConversationType];
+
+
+export const ConversationType = {
+  dm: 'dm',
+  group: 'group',
+} as const;
+
 /**
  * From T, pick a set of properties whose keys are in the union K
  */
-export interface PickIUserDTOFullnameOrProfilePic {
-  /** User fullname */
+export interface PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt {
   fullname: string;
-  /** User profile picture */
-  profilePic: string;
+  profilePic?: string;
+  _id: string;
 }
 
-export type GroupMemberDto = PickIUserDTOFullnameOrProfilePic;
+/**
+ * Construct a type with the properties of T except for those in type K.
+ */
+export type OmitUserResponseDtoEmailOrCreatedAtOrUpdatedAt = PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
 
-export interface GroupResponseDto {
-  /** MongoDB Object ID */
+/**
+ * Public user info referenced in other DTOs
+ */
+export type UserSummaryDto = PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
+
+/**
+ * GET /conversation/list response
+ */
+export interface ConversationResponseDto {
+  type: ConversationType;
+  members: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt[];
+  name?: string;
+  avatar?: string;
+  ownerId?: string;
   _id: string;
   createdAt: string;
   updatedAt: string;
-  name: string;
-  avatar?: string;
-  ownerId: MongooseTypesObjectId;
-  members: PickIUserDTOFullnameOrProfilePic[];
-  lastMessage?: GroupLastMessageDto;
+  lastMessage?: ConversationLastMessageDto;
   unreadCount?: number;
 }
 
-export interface CreateGroupBody {
+export interface FindOrCreateDmRequest {
+  memberId: string;
+}
+
+export interface CreateGroupRequest {
   name: string;
   memberIds: string[];
 }
 
-export interface GroupMessageResponseDto {
-  /** MongoDB Object ID */
+export interface ReactionDto {
+  emoji: string;
+  userId: string;
+}
+
+/**
+ * GET /conversation/:id/messages response (with populated sender)
+ */
+export interface MessageResponseDto {
+  conversationId?: string;
+  senderId?: string;
+  text?: string;
+  image?: string;
+  readBy: string[];
+  reactions: ReactionDto[];
   _id: string;
   createdAt: string;
   updatedAt: string;
-  groupId: MongooseTypesObjectId;
-  senderId: MongooseTypesObjectId;
-  text?: string;
-  image?: string;
-  reactions: ReactionDto[];
-  readBy: MongooseTypesObjectId[];
-  sender: PickIUserDTOFullnameOrProfilePic;
+  sender?: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
 }
 
-export interface SearchGroupMessageResultDto {
-  /** MongoDB Object ID */
+export interface UploadImageResponse {
+  imageUrl: string;
+}
+
+export interface SearchMessageResultDto {
   _id: string;
-  /** Message content */
   text?: string;
-  /** Sender's user ID */
   senderId: string;
-  /** Group ID */
-  groupId: string;
-  /** Group name */
-  groupName: string;
-  /** Sender's full name */
-  senderName: string;
+  conversationId: string;
   createdAt: string;
+  conversationType: ConversationType;
+  conversationName?: string;
+  senderName?: string;
+  otherUser?: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
 }
 
 export interface IUser {
-  /** User email */
   email: string;
-  /** User fullname */
   fullname: string;
-  /** User password */
   password: string;
-  /** User profile picture */
   profilePic?: string;
 }
 
@@ -175,67 +134,29 @@ export interface IUser {
  * From T, pick a set of properties whose keys are in the union K
  */
 export interface PickIUserEmailOrPassword {
-  /** User password */
   password: string;
-  /** User email */
   email: string;
 }
 
-export type MarkReadBody = {
-  messageIds: string[];
-};
-
 /**
  * @nullable
  */
-export type MarkRead200 = typeof MarkRead200[keyof typeof MarkRead200] | null;
+export type DissolveConversation200 = typeof DissolveConversation200[keyof typeof DissolveConversation200] | null;
 
 
-export const MarkRead200 = {
-} as const;
-
-export type SearchParams = {
-q: string;
-};
-
-export type PostMessageBody = {
-  text?: string;
-  image?: Blob;
-};
-
-/**
- * @nullable
- */
-export type DissolveGroup200 = typeof DissolveGroup200[keyof typeof DissolveGroup200] | null;
-
-
-export const DissolveGroup200 = {
+export const DissolveConversation200 = {
 } as const;
 
 export type UpdateGroupAvatarBody = {
   image?: Blob;
 };
 
-export type MarkGroupMessagesReadBody = {
-  messageIds: string[];
-};
-
-/**
- * @nullable
- */
-export type MarkGroupMessagesRead200 = typeof MarkGroupMessagesRead200[keyof typeof MarkGroupMessagesRead200] | null;
-
-
-export const MarkGroupMessagesRead200 = {
-} as const;
-
-export type SearchGroupMessagesParams = {
-q: string;
-};
-
-export type SendGroupMessageBody = {
-  text?: string;
+export type UploadImageBody = {
   image?: Blob;
+};
+
+export type SearchParams = {
+q: string;
 };
 
 /**

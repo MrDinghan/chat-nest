@@ -28,8 +28,8 @@ import type {
   IUser,
   Logout200,
   PickIUserEmailOrPassword,
-  UpdateProfileBody,
-  UserResponseDto
+  PickIUserSchemaExcludeKeyofIUserSchemaPassword,
+  UpdateProfileBody
 } from './chatNestAPI.schemas';
 
 import { request } from '../request';
@@ -48,9 +48,9 @@ export const getSignupUrl = () => {
   return `/api/auth/signup`
 }
 
-export const signup = async (iUser: IUser, options?: RequestInit): Promise<UserResponseDto> => {
+export const signup = async (iUser: IUser, options?: RequestInit): Promise<PickIUserSchemaExcludeKeyofIUserSchemaPassword> => {
   
-  return request<UserResponseDto>(getSignupUrl(),
+  return request<PickIUserSchemaExcludeKeyofIUserSchemaPassword>(getSignupUrl(),
   {      
     ...options,
     method: 'POST',
@@ -112,9 +112,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/api/auth/login`
 }
 
-export const login = async (pickIUserEmailOrPassword: PickIUserEmailOrPassword, options?: RequestInit): Promise<UserResponseDto> => {
+export const login = async (pickIUserEmailOrPassword: PickIUserEmailOrPassword, options?: RequestInit): Promise<PickIUserSchemaExcludeKeyofIUserSchemaPassword> => {
   
-  return request<UserResponseDto>(getLoginUrl(),
+  return request<PickIUserSchemaExcludeKeyofIUserSchemaPassword>(getLoginUrl(),
   {      
     ...options,
     method: 'POST',
@@ -239,11 +239,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/api/auth/updateProfile`
 }
 
-export const updateProfile = async (updateProfileBody: UpdateProfileBody, options?: RequestInit): Promise<UserResponseDto> => {
+export const updateProfile = async (updateProfileBody: UpdateProfileBody, options?: RequestInit): Promise<PickIUserSchemaExcludeKeyofIUserSchemaPassword> => {
     const formData = new FormData();
 formData.append(`file`, updateProfileBody.file);
 
-  return request<UserResponseDto>(getUpdateProfileUrl(),
+  return request<PickIUserSchemaExcludeKeyofIUserSchemaPassword>(getUpdateProfileUrl(),
   {      
     ...options,
     method: 'PUT'
@@ -305,9 +305,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/api/auth/checkAuth`
 }
 
-export const checkAuth = async ( options?: RequestInit): Promise<UserResponseDto> => {
+export const checkAuth = async ( options?: RequestInit): Promise<PickIUserSchemaExcludeKeyofIUserSchemaPassword> => {
   
-  return request<UserResponseDto>(getCheckAuthUrl(),
+  return request<PickIUserSchemaExcludeKeyofIUserSchemaPassword>(getCheckAuthUrl(),
   {      
     ...options,
     method: 'GET'

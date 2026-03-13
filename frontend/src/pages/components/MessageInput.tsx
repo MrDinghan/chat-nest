@@ -3,23 +3,20 @@ import { type FC, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import TextareaAutosize from "react-textarea-autosize";
 
-import { sendGroupMessage } from "@/api/endpoints/group";
-import { getGetUsersListQueryKey, postMessage } from "@/api/endpoints/message";
-import { queryClient } from "@/lib/queryClient";
+import { uploadImage } from "@/api/endpoints/conversation";
 import { useAuthStore } from "@/stores/useAuthStore";
+import type { ConversationMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
-import { normalizeGroupMessage } from "@/types/conversation";
 
 const MessageInput: FC = () => {
   const {
-    selectedUser,
+    selectedConversation,
     messages,
     setMessages,
     replaceMessage,
     markMessageFailed,
-    selectedGroup,
   } = useChatStore();
-  const { authUser } = useAuthStore();
+  const { authUser, socket } = useAuthStore();
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState<string>();
   const [imageFile, setImageFile] = useState<File>();
@@ -31,7 +28,6 @@ const MessageInput: FC = () => {
       toast.error("Please select an image file");
       return;
     }
-
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
@@ -43,67 +39,48 @@ const MessageInput: FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+  const doSend = (
+    tempId: string,
+    conversationId: string,
+    textToSend: string | undefined,
+    imageUrl: string | undefined,
+    blobPreview: string | undefined,
+  ) => {
+    socket?.emit(
+      "sendMessage",
+      { conversationId, text: textToSend, imageUrl },
+      (result) => {
+        if (blobPreview) URL.revokeObjectURL(blobPreview);
+        if ("error" in result) {
+          markMessageFailed(tempId);
+        } else {
+          replaceMessage(tempId, result as ConversationMessage);
+        }
+      },
+    );
+  };
+
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!text.trim() && !imageFile) return;
+    if (!selectedConversation || !authUser) return;
 
-    if (selectedGroup) {
-      // group message: optimistic update
-      const tempId = `temp_${Date.now()}`;
-      const optimisticMsg = {
-        _id: tempId,
-        clientId: tempId,
-        pending: true,
-        senderId: authUser!._id,
-        sender: {
-          _id: authUser!._id,
-          fullname: authUser!.fullname,
-          profilePic: authUser?.profilePic,
-        },
-        text: text.trim() || void 0,
-        image: imagePreview,
-        _retryFile: imageFile,
-        reactions: [],
-        readBy: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setMessages([...messages, optimisticMsg]);
-
-      const prevImagePreview = imagePreview;
-      const prevImageFile = imageFile;
-      setText("");
-      setImagePreview(void 0);
-      setImageFile(void 0);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-
-      sendGroupMessage(selectedGroup._id, {
-        text: optimisticMsg.text,
-        image: prevImageFile,
-      })
-        .then((newMsg) => {
-          if (prevImagePreview) URL.revokeObjectURL(prevImagePreview);
-          replaceMessage(tempId, normalizeGroupMessage(newMsg));
-        })
-        .catch(() => {
-          markMessageFailed(tempId);
-        });
-      return;
-    }
-
-    // DM: optimistic update
     const tempId = `temp_${Date.now()}`;
-    const optimisticMsg = {
+    const optimisticMsg: ConversationMessage = {
       _id: tempId,
       clientId: tempId,
       pending: true,
-      senderId: authUser!._id,
-      receiverId: selectedUser!._id,
+      conversationId: selectedConversation._id,
+      senderId: authUser._id,
+      sender: {
+        _id: authUser._id,
+        fullname: authUser.fullname,
+        profilePic: authUser.profilePic,
+      },
       text: text.trim() || void 0,
       image: imagePreview,
       _retryFile: imageFile,
-      isRead: false,
+      readBy: [],
       reactions: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -111,6 +88,7 @@ const MessageInput: FC = () => {
 
     setMessages([...messages, optimisticMsg]);
 
+    const prevText = text.trim();
     const prevImagePreview = imagePreview;
     const prevImageFile = imageFile;
     setText("");
@@ -118,25 +96,36 @@ const MessageInput: FC = () => {
     setImageFile(void 0);
     if (fileInputRef.current) fileInputRef.current.value = "";
 
-    postMessage(selectedUser?._id ?? "", {
-      text: optimisticMsg.text,
-      image: prevImageFile,
-    })
-      .then((newMsg) => {
+    if (prevImageFile) {
+      try {
+        const { imageUrl } = await uploadImage({ image: prevImageFile });
+        doSend(
+          tempId,
+          selectedConversation._id,
+          prevText,
+          imageUrl,
+          prevImagePreview,
+        );
+      } catch {
         if (prevImagePreview) URL.revokeObjectURL(prevImagePreview);
-        replaceMessage(tempId, newMsg);
-        queryClient.invalidateQueries({ queryKey: getGetUsersListQueryKey() });
-      })
-      .catch(() => {
         markMessageFailed(tempId);
-      });
+      }
+    } else {
+      doSend(
+        tempId,
+        selectedConversation._id,
+        prevText,
+        undefined,
+        prevImagePreview,
+      );
+    }
   };
 
   useEffect(() => {
     setText("");
     removeImage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser?._id, selectedGroup?._id]);
+  }, [selectedConversation?._id]);
 
   return (
     <div className="p-4 w-full">
@@ -150,8 +139,7 @@ const MessageInput: FC = () => {
             />
             <button
               onClick={removeImage}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300
-              flex items-center justify-center"
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300 flex items-center justify-center"
               type="button"
             >
               <X className="size-3" />
@@ -183,7 +171,6 @@ const MessageInput: FC = () => {
             ref={fileInputRef}
             onChange={handleImageChange}
           />
-
           <button
             type="button"
             className={`sm:flex btn btn-circle ${imagePreview ? "text-success" : "text-base-content/40"}`}
@@ -203,4 +190,5 @@ const MessageInput: FC = () => {
     </div>
   );
 };
+
 export default MessageInput;

@@ -3,10 +3,13 @@ import { Search, X } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
 
 import type { UserResponseDto } from "@/api/endpoints/chatNestAPI.schemas";
-import type { SearchGroupMessageResultDto } from "@/api/endpoints/chatNestAPI.schemas";
-import { searchGroupMessages } from "@/api/endpoints/group";
-import { useGetGroupList } from "@/api/endpoints/group";
-import { useGetUsersList, useSearch } from "@/api/endpoints/message";
+import {
+  findOrCreateDm,
+  getGetConversationListQueryKey,
+  useSearch,
+} from "@/api/endpoints/conversation";
+import { useGetUserList } from "@/api/endpoints/user";
+import { queryClient } from "@/lib/queryClient";
 import { formatChatTime } from "@/lib/utils";
 import { useChatStore } from "@/stores/useChatStore";
 
@@ -18,11 +21,8 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [groupMessageResults, setGroupMessageResults] = useState<
-    SearchGroupMessageResultDto[]
-  >([]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { setSelectedUser, setPendingScrollToMessageId, setSelectedGroup } =
+  const { setSelectedConversation, setPendingScrollToMessageId } =
     useChatStore();
 
   useEffect(() => {
@@ -35,16 +35,6 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
   useEffect(() => {
     setIsOpen(query.length >= 1);
   }, [query]);
-
-  useEffect(() => {
-    if (debouncedQuery.length < 1) {
-      setGroupMessageResults([]);
-      return;
-    }
-    searchGroupMessages({ q: debouncedQuery })
-      .then(setGroupMessageResults)
-      .catch(() => {});
-  }, [debouncedQuery]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -66,7 +56,7 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
     };
   }, []);
 
-  const { data: allUsers } = useGetUsersList();
+  const { data: allUsers } = useGetUserList();
   const { data: messageResults } = useSearch(
     { q: debouncedQuery },
     {
@@ -76,7 +66,6 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
       },
     },
   );
-  const { data: allGroups } = useGetGroupList();
 
   const userResults =
     allUsers?.filter((u) => {
@@ -85,22 +74,37 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
     }) ?? [];
 
   const hasResults =
-    userResults.length > 0 ||
-    (messageResults?.length ?? 0) > 0 ||
-    groupMessageResults.length > 0;
+    userResults.length > 0 || (messageResults?.length ?? 0) > 0;
 
-  const handleSelectUser = (user: UserResponseDto) => {
-    setSelectedUser(user);
+  const handleSelectUser = async (user: UserResponseDto) => {
     setQuery("");
+    try {
+      const conv = await findOrCreateDm({ memberId: user._id });
+      setSelectedConversation(conv);
+      queryClient.invalidateQueries({
+        queryKey: getGetConversationListQueryKey(),
+      });
+    } catch {
+      // ignore
+    }
   };
 
-  const handleSelectGroupMessage = (msg: SearchGroupMessageResultDto) => {
-    const group = allGroups?.find((g) => g._id === msg.groupId);
-    if (group) {
-      setSelectedGroup(group);
+  const handleSelectMessage = async (msg: {
+    _id: string;
+    conversationId: string;
+  }) => {
+    setQuery("");
+    const convs =
+      queryClient.getQueryData<{ _id: string }[]>(
+        getGetConversationListQueryKey(),
+      ) ?? [];
+    const conv = convs.find((c) => c._id === msg.conversationId);
+    if (conv) {
+      setSelectedConversation(
+        conv as Parameters<typeof setSelectedConversation>[0],
+      );
       setPendingScrollToMessageId(msg._id);
     }
-    setQuery("");
   };
 
   return (
@@ -115,11 +119,7 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
           className="bg-transparent outline-none w-full placeholder:text-base-content/40 text-base"
         />
         {query && (
-          <button
-            onClick={() => {
-              setQuery("");
-            }}
-          >
+          <button onClick={() => setQuery("")}>
             <X className="w-4 h-4 text-base-content/40" />
           </button>
         )}
@@ -162,63 +162,50 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
                   <div className="px-3 py-1.5 text-xs font-semibold text-base-content/50 uppercase tracking-wide border-b border-base-200">
                     Messages
                   </div>
-                  {messageResults!.map((msg) => (
-                    <button
-                      key={msg._id}
-                      onClick={() => {
-                        handleSelectUser(msg.otherUser);
-                        setPendingScrollToMessageId(msg._id);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-base-200 transition-colors text-left"
-                    >
-                      <img
-                        src={msg.otherUser.profilePic || "/avatar.png"}
-                        alt={msg.otherUser.fullname}
-                        className="size-8 rounded-full object-cover shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">
-                          {msg.otherUser.fullname}
-                        </div>
-                        <div className="text-xs text-base-content/40 truncate">
-                          {msg.text}
-                        </div>
-                        <div className="text-xs text-base-content/30 mt-0.5">
-                          {formatChatTime(msg.createdAt, true)}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+                  {messageResults!.map((msg) => {
+                    const isGroup = msg.conversationType === "group";
+                    const pic = isGroup
+                      ? void 0
+                      : msg.otherUser?.profilePic || "/avatar.png";
+                    const name = isGroup
+                      ? (msg.conversationName ?? "Group")
+                      : (msg.otherUser?.fullname ?? "");
+                    const preview =
+                      isGroup && msg.senderName
+                        ? `${msg.senderName}: ${msg.text ?? ""}`
+                        : (msg.text ?? "");
 
-              {groupMessageResults.length > 0 && (
-                <div>
-                  <div className="px-3 py-1.5 text-xs font-semibold text-base-content/50 uppercase tracking-wide border-b border-base-200">
-                    Group Messages
-                  </div>
-                  {groupMessageResults.map((msg) => (
-                    <button
-                      key={msg._id}
-                      onClick={() => handleSelectGroupMessage(msg)}
-                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-base-200 transition-colors text-left"
-                    >
-                      <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-sm font-bold text-primary">
-                        {msg.groupName[0]?.toUpperCase() ?? "G"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">
-                          {msg.groupName}
+                    return (
+                      <button
+                        key={msg._id}
+                        onClick={() => handleSelectMessage(msg)}
+                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-base-200 transition-colors text-left"
+                      >
+                        {pic ? (
+                          <img
+                            src={pic}
+                            alt={name}
+                            className="size-8 rounded-full object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-sm font-bold text-primary">
+                            {name[0]?.toUpperCase() ?? "G"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">
+                            {name}
+                          </div>
+                          <div className="text-xs text-base-content/40 truncate">
+                            {preview}
+                          </div>
+                          <div className="text-xs text-base-content/30 mt-0.5">
+                            {formatChatTime(msg.createdAt, true)}
+                          </div>
                         </div>
-                        <div className="text-xs text-base-content/50 truncate">
-                          {msg.senderName}: {msg.text}
-                        </div>
-                        <div className="text-xs text-base-content/30 mt-0.5">
-                          {formatChatTime(msg.createdAt, true)}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </>

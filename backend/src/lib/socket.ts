@@ -1,10 +1,15 @@
+import {
+  ClientToServerEvents,
+  MessageDto,
+  ServerToClientEvents,
+} from "@shared/socket-events";
 import express, { Express } from "express";
 import http from "http";
 import { Server } from "socket.io";
 
-import Group from "@/models/group.model";
-import GroupMessage from "@/models/groupMessage.model";
+import Conversation from "@/models/conversation.model";
 import Message from "@/models/message.model";
+import User from "@/models/user.model";
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -15,30 +20,95 @@ export const getReceiverSocketId = (userId: string) => {
   return userSocketMap[userId];
 };
 
-const io = new Server(server);
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
+  cors: { origin: "*" },
+});
 
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
-  const userId = socket.handshake.query.userId as string;
-  if (userId) {
-    userSocketMap[userId] = socket.id;
-    // join all group rooms this user belongs to
-    Group.find({ members: userId }).then((groups) => {
-      for (const group of groups) {
-        socket.join(`group:${group._id}`);
-      }
-    });
+  const { userId } = socket.handshake.query;
+  if (typeof userId !== "string" || !userId) {
+    socket.disconnect();
+    return;
   }
 
-  // io.emit() is used to send events to all the connected clients
+  userSocketMap[userId] = socket.id;
+
+  // Join all conversation rooms this user belongs to
+  Conversation.find({ members: userId }).then((convs) => {
+    for (const conv of convs) {
+      socket.join(`conv:${conv._id}`);
+    }
+  });
+
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-  socket.on("toggleReaction", async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+  // Send message via socket with ack
+  socket.on("sendMessage", async ({ conversationId, text, imageUrl }, ack) => {
+    try {
+      if (!userId) return ack({ error: "Not authenticated" });
+      if (!text && !imageUrl)
+        return ack({ error: "Message must contain text or image" });
+
+      const conv = await Conversation.findById(conversationId);
+      if (!conv) return ack({ error: "Conversation not found" });
+      if (!conv.members.some((m) => m.toString() === userId)) {
+        return ack({ error: "Not a member of this conversation" });
+      }
+
+      const newMessage = new Message({
+        conversationId,
+        senderId: userId,
+        text,
+        image: imageUrl,
+        readBy: [],
+        reactions: [],
+      });
+      await newMessage.save();
+
+      const senderDoc = await User.findById(userId)
+        .select("fullname profilePic _id")
+        .lean();
+
+      const msgDto: MessageDto = {
+        _id: newMessage._id.toString(),
+        conversationId: conversationId,
+        senderId: userId,
+        sender: senderDoc
+          ? {
+              _id: senderDoc._id.toString(),
+              fullname: senderDoc.fullname,
+              profilePic: senderDoc.profilePic,
+            }
+          : void 0,
+        text: newMessage.text,
+        image: newMessage.image,
+        readBy: [],
+        reactions: [],
+        createdAt: newMessage.createdAt,
+        updatedAt: newMessage.updatedAt,
+      };
+
+      // Broadcast to all OTHER members in the conv room
+      socket.to(`conv:${conversationId}`).emit("newMessage", msgDto);
+
+      // Return to sender via ack
+      ack(msgDto);
+    } catch (err) {
+      console.error("sendMessage error", err);
+      ack({ error: "Failed to send message" });
+    }
+  });
+
+  // Toggle emoji reaction
+  socket.on("toggleReaction", async ({ messageId, emoji }) => {
     const message = await Message.findById(messageId);
     if (!message) return;
 
-    const idx = message.reactions.findIndex((r) => r.emoji === emoji && r.userId === userId);
+    const idx = message.reactions.findIndex(
+      (r) => r.emoji === emoji && r.userId === userId,
+    );
     if (idx >= 0) {
       message.reactions.splice(idx, 1);
     } else {
@@ -47,30 +117,28 @@ io.on("connection", (socket) => {
     await message.save();
 
     const payload = { messageId, reactions: message.reactions };
-    const senderSocketId = getReceiverSocketId(String(message.senderId));
-    const receiverSocketId = getReceiverSocketId(String(message.receiverId));
-    if (senderSocketId) io.to(senderSocketId).emit("reactionUpdated", payload);
-    if (receiverSocketId) io.to(receiverSocketId).emit("reactionUpdated", payload);
+    io.to(`conv:${message.conversationId}`).emit("reactionUpdated", payload);
   });
 
-  socket.on(
-    "toggleGroupReaction",
-    async ({ messageId, emoji, groupId }: { messageId: string; emoji: string; groupId: string }) => {
-      const message = await GroupMessage.findById(messageId);
-      if (!message) return;
+  // Mark messages as read
+  socket.on("markRead", async ({ messageIds, conversationId }) => {
+    if (!userId) return;
 
-      const idx = message.reactions.findIndex((r) => r.emoji === emoji && r.userId === userId);
-      if (idx >= 0) {
-        message.reactions.splice(idx, 1);
-      } else {
-        message.reactions.push({ emoji, userId });
-      }
-      await message.save();
+    await Message.updateMany(
+      {
+        _id: { $in: messageIds },
+        conversationId,
+        readBy: { $ne: userId },
+      },
+      { $addToSet: { readBy: userId } },
+    );
 
-      const payload = { messageId, reactions: message.reactions };
-      io.to(`group:${groupId}`).emit("groupReactionUpdated", payload);
-    },
-  );
+    io.to(`conv:${conversationId}`).emit("messagesRead", {
+      messageIds,
+      readerId: userId,
+      conversationId,
+    });
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);

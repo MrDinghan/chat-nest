@@ -1,4 +1,4 @@
-import { UserResponseDto } from "@/models/user.response.dto";
+import { UserResponseDto } from "@shared/types";
 
 declare global {
   namespace Express {

@@ -1,14 +1,13 @@
+import type {
+  ConversationResponseDto,
+  MessageResponseDto,
+} from "@shared/types";
 import { useEffect } from "react";
 
-import type {
-  GroupMessageResponseDto,
-  MessageResponseDto,
-  UserResponseDto,
-} from "@/api/endpoints/chatNestAPI.schemas";
-import { getGetUsersListQueryKey } from "@/api/endpoints/message";
-import { showMessageNotification } from "@/lib/notification";
+import { getGetConversationListQueryKey } from "@/api/endpoints/conversation";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useChatStore } from "@/stores/useChatStore";
 
 export function useNotificationSocket() {
   const { socket, authUser } = useAuthStore();
@@ -17,43 +16,34 @@ export function useNotificationSocket() {
     if (!socket) return;
 
     const handler = (msg: MessageResponseDto) => {
-      // Don't notify for own messages
       if (msg.senderId === authUser?._id) return;
-      // Don't notify if tab is focused
       if (document.hasFocus()) return;
-
-      const users =
-        queryClient.getQueryData<UserResponseDto[]>(
-          getGetUsersListQueryKey(),
-        ) ?? [];
-      showMessageNotification(msg, users);
-    };
-
-    const groupHandler = (msg: GroupMessageResponseDto) => {
-      // Don't notify for own messages
-      if (msg.senderId === authUser?._id) return;
-      // Don't notify if tab is focused
-      if (document.hasFocus()) return;
-
       if (!("Notification" in window)) return;
       if (Notification.permission !== "granted") return;
 
-      const title = msg.sender?.fullname ?? "New Group Message";
+      const senderName = msg.sender?.fullname ?? "New Message";
       const body = msg.text || (msg.image ? "[picture]" : "");
       const icon = msg.sender?.profilePic || "/avatar.png";
 
-      const n = new Notification(title, { body, icon });
+      const n = new Notification(senderName, { body, icon });
       n.onclick = () => {
         window.focus();
         n.close();
+        const convs =
+          queryClient.getQueryData<ConversationResponseDto[]>(
+            getGetConversationListQueryKey(),
+          ) ?? [];
+        const conv = convs.find((c) => c._id === msg.conversationId);
+        if (conv) {
+          useChatStore.getState().setSelectedConversation(conv);
+          useChatStore.getState().setPendingScrollToMessageId(msg._id);
+        }
       };
     };
 
     socket.on("newMessage", handler);
-    socket.on("newGroupMessage", groupHandler);
     return () => {
       socket.off("newMessage", handler);
-      socket.off("newGroupMessage", groupHandler);
     };
   }, [socket, authUser?._id]);
 }

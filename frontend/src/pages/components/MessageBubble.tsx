@@ -2,7 +2,7 @@ import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
 import type { FC } from "react";
 
 import { formatChatTime } from "@/lib/utils";
-import type { ConversationMessage } from "@/types/conversation";
+import type { ConversationMessage } from "@/stores/useChatStore";
 
 import ChatImage from "./ChatImage";
 import MessageReactions from "./MessageReactions";
@@ -11,31 +11,29 @@ interface MessageBubbleProps {
   message: ConversationMessage;
   authUserId: string;
   authUserPic: string;
-  selectedUserPic: string;
+  otherPic: string;
   imageSlides: { src: string }[];
   onRetry: (message: ConversationMessage) => void;
   isFirstUnread: boolean;
   isHighlighted?: boolean;
   showSenderInfo?: { name: string; pic: string };
-  isGroupChat?: boolean;
-  groupId?: string;
+  conversationType: "dm" | "group";
 }
 
 const MessageBubble: FC<MessageBubbleProps> = ({
   message,
   authUserId,
   authUserPic,
-  selectedUserPic,
+  otherPic,
   imageSlides,
   onRetry,
   isFirstUnread,
   isHighlighted,
   showSenderInfo,
-  isGroupChat,
-  groupId,
+  conversationType,
 }) => {
   const isMine = message.senderId === authUserId;
-  const readCount = isGroupChat ? (message.readBy?.filter((id) => id !== authUserId).length ?? 0) : 0;
+  const readCount = (message.readBy ?? []).filter((id) => id !== authUserId).length;
 
   return (
     <div
@@ -57,7 +55,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
               src={
                 isMine
                   ? authUserPic || "/avatar.png"
-                  : showSenderInfo?.pic || selectedUserPic || "/avatar.png"
+                  : showSenderInfo?.pic || otherPic || "/avatar.png"
               }
               alt="profile pic"
             />
@@ -75,12 +73,12 @@ const MessageBubble: FC<MessageBubbleProps> = ({
           <div className="flex items-end gap-1.5 justify-end">
             {!message.pending && !message.failed && (
               <div className="shrink-0 mb-1">
-                {isGroupChat ? (
+                {conversationType === "group" ? (
                   readCount > 0 ? (
                     <span className="text-xs text-base-content/40">{readCount} read</span>
                   ) : null
                 ) : (
-                  message.isRead ? (
+                  readCount > 0 ? (
                     <CheckCircle2 size={14} className="text-success" strokeWidth={2} />
                   ) : (
                     <Circle size={14} className="text-base-content/30" strokeWidth={1.5} />
@@ -128,7 +126,6 @@ const MessageBubble: FC<MessageBubbleProps> = ({
               reactions={message.reactions ?? []}
               authUserId={authUserId}
               isMine={isMine}
-              groupId={groupId}
             />
           )}
         </div>

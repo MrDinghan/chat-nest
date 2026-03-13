@@ -10,10 +10,10 @@ import Sidebar from "./components/Sidebar";
 import { useNotificationSocket } from "./hooks/useNotificationSocket";
 
 const HomePage: FC = () => {
-  const { selectedUser, selectedGroup } = useChatStore();
+  const { selectedConversation } = useChatStore();
   const { authUser } = useAuthStore();
   const authPic = authUser?.profilePic;
-  const hasSelected = !!(selectedUser || selectedGroup);
+  const hasSelected = !!selectedConversation;
 
   useNotificationSocket();
 

@@ -3,8 +3,11 @@ import { type FC, useState } from "react";
 import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
 
-import { createGroup, getGetGroupListQueryKey } from "@/api/endpoints/group";
-import { useGetUsersList } from "@/api/endpoints/message";
+import {
+  createGroup,
+  getGetConversationListQueryKey,
+} from "@/api/endpoints/conversation";
+import { useGetUserList } from "@/api/endpoints/user";
 import { queryClient } from "@/lib/queryClient";
 import { useChatStore } from "@/stores/useChatStore";
 
@@ -13,13 +16,13 @@ interface CreateGroupModalProps {
 }
 
 const CreateGroupModal: FC<CreateGroupModalProps> = ({ onClose }) => {
-  const { setSelectedGroup } = useChatStore();
+  const { setSelectedConversation } = useChatStore();
   const [groupName, setGroupName] = useState("");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isCreating, setIsCreating] = useState(false);
 
-  const { data: users } = useGetUsersList();
+  const { data: users } = useGetUserList();
 
   const filtered = (users ?? []).filter((u) =>
     u.fullname.toLowerCase().includes(search.toLowerCase()),
@@ -45,15 +48,15 @@ const CreateGroupModal: FC<CreateGroupModalProps> = ({ onClose }) => {
     }
     setIsCreating(true);
     try {
-      const group = await createGroup({
+      const conv = await createGroup({
         name: groupName.trim(),
         memberIds: [...selectedIds],
       });
       await queryClient.invalidateQueries({
-        queryKey: getGetGroupListQueryKey(),
+        queryKey: getGetConversationListQueryKey(),
       });
-      toast.success(`Group "${group.name}" created`);
-      setSelectedGroup(group);
+      toast.success(`Group "${conv.name}" created`);
+      setSelectedConversation(conv);
       onClose();
     } finally {
       setIsCreating(false);

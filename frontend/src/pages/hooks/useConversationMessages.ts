@@ -1,26 +1,20 @@
 import { useMemo } from "react";
 
-import { useGetGroupMessages } from "@/api/endpoints/group";
-import { useGetMessages } from "@/api/endpoints/message";
+import { useGetMessages } from "@/api/endpoints/conversation";
+import type { ConversationMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
-import { normalizeDmMessage, normalizeGroupMessage } from "@/types/conversation";
 
 export function useConversationMessages() {
-  const { selectedUser, selectedGroup } = useChatStore();
+  const { selectedConversation } = useChatStore();
 
-  const dmQuery = useGetMessages(selectedUser?._id ?? "", {
-    query: { enabled: !!selectedUser },
-  });
-  const groupQuery = useGetGroupMessages(selectedGroup?._id ?? "", {
-    query: { enabled: !!selectedGroup },
+  const query = useGetMessages(selectedConversation?._id ?? "", {
+    query: { enabled: !!selectedConversation },
   });
 
-  const messages = useMemo(() => {
-    if (selectedGroup) return (groupQuery.data ?? []).map(normalizeGroupMessage);
-    return (dmQuery.data ?? []).map(normalizeDmMessage);
-  }, [selectedGroup, dmQuery.data, groupQuery.data]);
+  const messages = useMemo(
+    () => (query.data ?? []) as unknown as ConversationMessage[],
+    [query.data],
+  );
 
-  const isLoading = selectedGroup ? groupQuery.isLoading : dmQuery.isLoading;
-
-  return { messages, isLoading };
+  return { messages, isLoading: query.isLoading };
 }

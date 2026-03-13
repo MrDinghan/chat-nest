@@ -1,22 +1,21 @@
+import { IMessageSchema } from "@shared/types";
 import mongoose from "mongoose";
 
-import { IMessageDTO } from "./message.dto";
-
-const messageSchema = new mongoose.Schema<IMessageDTO>(
+const messageSchema = new mongoose.Schema<IMessageSchema>(
   {
-    senderId: {
+    conversationId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Conversation",
       required: true,
     },
-    receiverId: {
+    senderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     text: { type: String },
     image: { type: String },
-    isRead: { type: Boolean, default: false },
+    readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     reactions: [
       {
         emoji: { type: String, required: true },
@@ -24,9 +23,7 @@ const messageSchema = new mongoose.Schema<IMessageDTO>(
       },
     ],
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 const Message = mongoose.model("Message", messageSchema);

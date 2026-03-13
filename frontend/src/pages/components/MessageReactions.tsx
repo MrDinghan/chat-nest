@@ -11,7 +11,6 @@ interface MessageReactionsProps {
   reactions: ReactionDto[];
   authUserId: string;
   isMine: boolean;
-  groupId?: string;
 }
 
 const MessageReactions: FC<MessageReactionsProps> = ({
@@ -19,7 +18,6 @@ const MessageReactions: FC<MessageReactionsProps> = ({
   reactions,
   authUserId,
   isMine,
-  groupId,
 }) => {
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -38,11 +36,7 @@ const MessageReactions: FC<MessageReactionsProps> = ({
   }, new Map());
 
   const toggleReaction = (emoji: string) => {
-    if (groupId) {
-      socket?.emit("toggleGroupReaction", { messageId, emoji, groupId });
-    } else {
-      socket?.emit("toggleReaction", { messageId, emoji });
-    }
+    socket?.emit("toggleReaction", { messageId, emoji });
   };
 
   const handlePickerSelect = (emoji: { native: string }) => {
