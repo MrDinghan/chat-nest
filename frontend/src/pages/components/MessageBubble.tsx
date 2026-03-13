@@ -45,6 +45,20 @@ const MessageBubble: FC<MessageBubbleProps> = ({
   ).length;
   const allRead = conversationType === "group" && totalMembers != null && readCount >= totalMembers - 1;
 
+  const renderReadIndicator = () => {
+    if (message.pending || message.failed) return null;
+
+    if (conversationType === "group") {
+      if (allRead) return <CheckCircle2 size={14} className="text-success shrink-0 mb-1" strokeWidth={2} />;
+      if (readCount > 0) return <span className="text-xs text-base-content/40 shrink-0 mb-1">{readCount} read</span>;
+      return null;
+    }
+
+    return readCount > 0
+      ? <CheckCircle2 size={14} className="text-success shrink-0 mb-1" strokeWidth={2} />
+      : <Circle size={14} className="text-base-content/30 shrink-0 mb-1" strokeWidth={1.5} />;
+  };
+
   return (
     <div
       className={`rounded-lg px-2 transition-colors duration-700 ${isHighlighted ? "bg-yellow-100/70" : "bg-transparent"}`}
@@ -80,31 +94,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
         </div>
         {isMine ? (
           <div className="flex items-end gap-1.5 justify-end">
-            {!message.pending && !message.failed && (
-              <div className="shrink-0 mb-1">
-                {conversationType === "group" ? (
-                  allRead ? (
-                    <CheckCircle2 size={14} className="text-success" strokeWidth={2} />
-                  ) : readCount > 0 ? (
-                    <span className="text-xs text-base-content/40">
-                      {readCount} read
-                    </span>
-                  ) : null
-                ) : readCount > 0 ? (
-                  <CheckCircle2
-                    size={14}
-                    className="text-success"
-                    strokeWidth={2}
-                  />
-                ) : (
-                  <Circle
-                    size={14}
-                    className="text-base-content/30"
-                    strokeWidth={1.5}
-                  />
-                )}
-              </div>
-            )}
+            {renderReadIndicator()}
             <div className="chat-bubble chat-bubble-primary flex flex-col">
               {message.image && (
                 <ChatImage

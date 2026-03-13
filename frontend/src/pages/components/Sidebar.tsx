@@ -85,6 +85,19 @@ const Sidebar: FC = () => {
   const getOtherMember = (conv: ConversationResponseDto) =>
     conv.members.find((m) => m._id !== authUser?._id);
 
+  const getLastMessagePreview = (conv: ConversationResponseDto) => {
+    const msg = conv.lastMessage;
+    if (!msg) return "";
+    const isImageOnly = msg.image && !msg.text;
+    if (isImageOnly) {
+      return conv.type === "group" ? `${msg.senderName}: [picture]` : "[picture]";
+    }
+    if (conv.type === "group" && msg.senderName) {
+      return `${msg.senderName}: ${msg.text}`;
+    }
+    return msg.text ?? "";
+  };
+
   const handleSelectUser = async (user: UserResponseDto) => {
     try {
       const conv = await findOrCreateDm({ memberId: user._id });
@@ -203,16 +216,7 @@ const Sidebar: FC = () => {
                           {displayName}
                         </div>
                         <div className="text-sm text-base-content/40 truncate">
-                          {conv.lastMessage
-                            ? conv.lastMessage.image && !conv.lastMessage.text
-                              ? conv.type === "group"
-                                ? `${conv.lastMessage.senderName}: [picture]`
-                                : "[picture]"
-                              : conv.type === "group" &&
-                                  conv.lastMessage.senderName
-                                ? `${conv.lastMessage.senderName}: ${conv.lastMessage.text}`
-                                : conv.lastMessage.text
-                            : ""}
+                          {getLastMessagePreview(conv)}
                         </div>
                       </div>
                       {conv.lastMessage?.createdAt && (
