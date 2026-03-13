@@ -12,7 +12,7 @@ export function useConversationMessages() {
   });
 
   const messages = useMemo(
-    () => (query.data ?? []) as unknown as ConversationMessage[],
+    () => (query.data ?? []) as ConversationMessage[],
     [query.data],
   );
 

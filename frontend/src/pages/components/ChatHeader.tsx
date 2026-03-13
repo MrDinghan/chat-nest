@@ -12,7 +12,7 @@ const ChatHeader: FC = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const isGroup = selectedConversation?.type === "group";
-  const isGroupOwner = isGroup && authUser && selectedConversation?.ownerId === authUser._id;
+  const isGroupOwner = isGroup && authUser && selectedConversation?.owner?._id === authUser._id;
 
   const otherMember = !isGroup
     ? selectedConversation?.members.find((m) => m._id !== authUser?._id)

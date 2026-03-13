@@ -74,7 +74,7 @@ const models: TsoaRoute.Models = {
             "members": {"dataType":"array","array":{"dataType":"refAlias","ref":"UserSummaryDto"},"required":true},
             "name": {"dataType":"string"},
             "avatar": {"dataType":"string"},
-            "ownerId": {"dataType":"string"},
+            "owner": {"ref":"UserSummaryDto"},
             "_id": {"dataType":"string","required":true},
             "createdAt": {"dataType":"string","required":true},
             "updatedAt": {"dataType":"string","required":true},
@@ -101,6 +101,21 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "IConversationSchema": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"ref":"ConversationType","required":true},
+            "members": {"dataType":"array","array":{"dataType":"refAlias","ref":"UserSummaryDto"},"required":true},
+            "name": {"dataType":"string"},
+            "avatar": {"dataType":"string"},
+            "owner": {"ref":"UserSummaryDto"},
+            "_id": {"dataType":"string","required":true},
+            "createdAt": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ReactionDto": {
         "dataType": "refObject",
         "properties": {
@@ -113,16 +128,15 @@ const models: TsoaRoute.Models = {
     "MessageResponseDto": {
         "dataType": "refObject",
         "properties": {
-            "conversationId": {"dataType":"string"},
-            "senderId": {"dataType":"string"},
+            "conversation": {"ref":"IConversationSchema","required":true},
+            "sender": {"ref":"UserSummaryDto","required":true},
             "text": {"dataType":"string"},
             "image": {"dataType":"string"},
-            "readBy": {"dataType":"array","array":{"dataType":"string"},"required":true},
+            "readBy": {"dataType":"array","array":{"dataType":"refAlias","ref":"UserSummaryDto"},"required":true},
             "reactions": {"dataType":"array","array":{"dataType":"refObject","ref":"ReactionDto"},"required":true},
             "_id": {"dataType":"string","required":true},
             "createdAt": {"dataType":"string","required":true},
             "updatedAt": {"dataType":"string","required":true},
-            "sender": {"ref":"UserSummaryDto"},
         },
         "additionalProperties": false,
     },

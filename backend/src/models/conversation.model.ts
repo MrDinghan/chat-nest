@@ -7,7 +7,7 @@ const conversationSchema = new mongoose.Schema<IConversationSchema>(
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     name: { type: String },
     avatar: { type: String, default: "" },
-    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true },
 );

@@ -1,11 +1,11 @@
-// ── Base ──────────────────────────────────────────────────────────
+// Base
 export interface BaseDocumentDto {
   _id: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// ── User ──────────────────────────────────────────────────────────
+// User
 export interface IUser {
   email: string;
   fullname: string;
@@ -24,9 +24,8 @@ export type UserSummaryDto = Omit<
   UserResponseDto,
   "email" | "createdAt" | "updatedAt"
 >;
-// = { _id: string; fullname: string; profilePic?: string }
 
-// ── Conversation ──────────────────────────────────────────────────
+// Conversation
 export type ConversationType = "dm" | "group";
 
 export interface IConversation {
@@ -34,7 +33,7 @@ export interface IConversation {
   members: UserSummaryDto[];
   name?: string;
   avatar?: string;
-  ownerId?: string;
+  owner?: UserSummaryDto;
 }
 
 /** Mongoose schema generic: new Schema<IConversationSchema>() */
@@ -62,18 +61,18 @@ export interface ConversationResponseDto extends IConversationSchema {
   unreadCount?: number;
 }
 
-// ── Message ───────────────────────────────────────────────────────
+// Message
 export interface ReactionDto {
   emoji: string;
   userId: string;
 }
 
 export interface IMessage {
-  conversationId?: string;
-  senderId?: string;
+  conversation: IConversationSchema;
+  sender: UserSummaryDto;
   text?: string;
   image?: string;
-  readBy: string[];
+  readBy: UserSummaryDto[];
   reactions: ReactionDto[];
 }
 
@@ -81,9 +80,7 @@ export interface IMessage {
 export interface IMessageSchema extends IMessage, BaseDocumentDto {}
 
 /** GET /conversation/:id/messages response (with populated sender) */
-export interface MessageResponseDto extends IMessageSchema {
-  sender?: UserSummaryDto;
-}
+export interface MessageResponseDto extends IMessageSchema {}
 
 export interface SearchMessageResultDto {
   _id: string;

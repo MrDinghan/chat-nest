@@ -74,14 +74,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
         m._id === messageId ? { ...m, reactions } : m,
       ),
     })),
-  updateMessageReadBy: (messageIds, readerId) =>
+  updateMessageReadBy: (messageIds, readerId) => {
+    const conv = get().selectedConversation;
+    const reader = conv?.members.find((m) => m._id === readerId) ?? {
+      _id: readerId,
+      fullname: "",
+    };
     set((s) => ({
-      messages: s.messages.map((m) =>
-        messageIds.includes(m._id)
-          ? { ...m, readBy: [...new Set([...(m.readBy ?? []), readerId])] }
-          : m,
-      ),
-    })),
+      messages: s.messages.map((m) => {
+        if (!messageIds.includes(m._id)) return m;
+        if ((m.readBy ?? []).some((u) => u._id === readerId)) return m;
+        return { ...m, readBy: [...(m.readBy ?? []), reader] };
+      }),
+    }));
+  },
 
   selectedConversation: void 0,
   setSelectedConversation: (conv) =>
@@ -101,7 +107,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const convId = get().selectedConversation?._id;
 
     const newMessageHandler = (newMessage: MessageDto) => {
-      if (newMessage.conversationId !== get().selectedConversation?._id) return;
+      if (newMessage.conversation._id !== get().selectedConversation?._id) return;
       set({ messages: [...get().messages, newMessage] });
       queryClient.invalidateQueries({
         queryKey: getGetConversationListQueryKey(),

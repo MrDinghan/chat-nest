@@ -49,7 +49,7 @@ export class AuthController extends BaseController {
     if (!newUser) {
       return this.fail("Failed to create user");
     }
-    const token = generateToken(newUser._id);
+    const token = generateToken(newUser._id.toString());
     if (req.res) {
       this.setTokenCookie(req.res, token);
     }
@@ -71,7 +71,7 @@ export class AuthController extends BaseController {
     if (!isPasswordValid) {
       return this.fail("Invalid password");
     }
-    const token = generateToken(user._id);
+    const token = generateToken(user._id.toString());
     if (req.res) {
       this.setTokenCookie(req.res, token);
     }

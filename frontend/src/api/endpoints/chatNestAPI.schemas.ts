@@ -69,7 +69,7 @@ export interface ConversationResponseDto {
   members: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt[];
   name?: string;
   avatar?: string;
-  ownerId?: string;
+  owner?: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
   _id: string;
   createdAt: string;
   updatedAt: string;
@@ -86,6 +86,20 @@ export interface CreateGroupRequest {
   memberIds: string[];
 }
 
+/**
+ * Mongoose schema generic: new Schema<IConversationSchema>()
+ */
+export interface IConversationSchema {
+  type: ConversationType;
+  members: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt[];
+  name?: string;
+  avatar?: string;
+  owner?: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ReactionDto {
   emoji: string;
   userId: string;
@@ -95,16 +109,15 @@ export interface ReactionDto {
  * GET /conversation/:id/messages response (with populated sender)
  */
 export interface MessageResponseDto {
-  conversationId?: string;
-  senderId?: string;
+  conversation: IConversationSchema;
+  sender: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
   text?: string;
   image?: string;
-  readBy: string[];
+  readBy: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt[];
   reactions: ReactionDto[];
   _id: string;
   createdAt: string;
   updatedAt: string;
-  sender?: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
 }
 
 export interface UploadImageResponse {

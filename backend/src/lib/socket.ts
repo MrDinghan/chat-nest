@@ -1,6 +1,5 @@
 import {
   ClientToServerEvents,
-  MessageDto,
   ServerToClientEvents,
 } from "@shared/socket-events";
 import express, { Express } from "express";
@@ -9,7 +8,6 @@ import { Server } from "socket.io";
 
 import Conversation from "@/models/conversation.model";
 import Message from "@/models/message.model";
-import User from "@/models/user.model";
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -58,8 +56,8 @@ io.on("connection", (socket) => {
       }
 
       const newMessage = new Message({
-        conversationId,
-        senderId: userId,
+        conversation: conversationId,
+        sender: userId,
         text,
         image: imageUrl,
         readBy: [],
@@ -67,28 +65,10 @@ io.on("connection", (socket) => {
       });
       await newMessage.save();
 
-      const senderDoc = await User.findById(userId)
-        .select("fullname profilePic _id")
-        .lean();
-
-      const msgDto: MessageDto = {
-        _id: newMessage._id.toString(),
-        conversationId: conversationId,
-        senderId: userId,
-        sender: senderDoc
-          ? {
-              _id: senderDoc._id.toString(),
-              fullname: senderDoc.fullname,
-              profilePic: senderDoc.profilePic,
-            }
-          : void 0,
-        text: newMessage.text,
-        image: newMessage.image,
-        readBy: [],
-        reactions: [],
-        createdAt: newMessage.createdAt,
-        updatedAt: newMessage.updatedAt,
-      };
+      const msgDto = await Message.populate(newMessage, [
+        { path: "sender", select: "fullname profilePic _id" },
+        { path: "readBy", select: "fullname profilePic _id" },
+      ]);
 
       // Broadcast to all OTHER members in the conv room
       socket.to(`conv:${conversationId}`).emit("newMessage", msgDto);
@@ -117,7 +97,7 @@ io.on("connection", (socket) => {
     await message.save();
 
     const payload = { messageId, reactions: message.reactions };
-    io.to(`conv:${message.conversationId}`).emit("reactionUpdated", payload);
+    io.to(`conv:${message.conversation}`).emit("reactionUpdated", payload);
   });
 
   // Mark messages as read
@@ -127,7 +107,7 @@ io.on("connection", (socket) => {
     await Message.updateMany(
       {
         _id: { $in: messageIds },
-        conversationId,
+        conversation: conversationId,
         readBy: { $ne: userId },
       },
       { $addToSet: { readBy: userId } },

@@ -16,14 +16,14 @@ export function useNotificationSocket() {
     if (!socket) return;
 
     const handler = (msg: MessageResponseDto) => {
-      if (msg.senderId === authUser?._id) return;
+      if (msg.sender._id === authUser?._id) return;
       if (document.hasFocus()) return;
       if (!("Notification" in window)) return;
       if (Notification.permission !== "granted") return;
 
-      const senderName = msg.sender?.fullname ?? "New Message";
+      const senderName = msg.sender.fullname ?? "New Message";
       const body = msg.text || (msg.image ? "[picture]" : "");
-      const icon = msg.sender?.profilePic || "/avatar.png";
+      const icon = msg.sender.profilePic || "/avatar.png";
 
       const n = new Notification(senderName, { body, icon });
       n.onclick = () => {
@@ -33,7 +33,7 @@ export function useNotificationSocket() {
           queryClient.getQueryData<ConversationResponseDto[]>(
             getGetConversationListQueryKey(),
           ) ?? [];
-        const conv = convs.find((c) => c._id === msg.conversationId);
+        const conv = convs.find((c) => c._id === msg.conversation._id);
         if (conv) {
           useChatStore.getState().setSelectedConversation(conv);
           useChatStore.getState().setPendingScrollToMessageId(msg._id);

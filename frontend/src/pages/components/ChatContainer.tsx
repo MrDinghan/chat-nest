@@ -141,8 +141,8 @@ const ChatContainer: FC = () => {
             {virtualizer.getVirtualItems().map((vItem) => {
               const message = messages[vItem.index];
               const isUnreadForObserver =
-                message.senderId !== authUser?._id &&
-                !(message.readBy ?? []).includes(authUser!._id) &&
+                message.sender._id !== authUser?._id &&
+                !(message.readBy ?? []).some((u) => u._id === authUser!._id) &&
                 !message.pending &&
                 !message.failed;
 
@@ -176,10 +176,10 @@ const ChatContainer: FC = () => {
                     isHighlighted={message._id === highlightedMessageId}
                     showSenderInfo={
                       conversationType === "group" &&
-                      message.senderId !== authUser?._id
+                      message.sender._id !== authUser?._id
                         ? {
-                            name: message.sender?.fullname ?? "",
-                            pic: message.sender?.profilePic ?? "",
+                            name: message.sender.fullname ?? "",
+                            pic: message.sender.profilePic ?? "",
                           }
                         : void 0
                     }

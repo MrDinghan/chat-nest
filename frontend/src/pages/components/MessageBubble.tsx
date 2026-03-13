@@ -32,8 +32,8 @@ const MessageBubble: FC<MessageBubbleProps> = ({
   showSenderInfo,
   conversationType,
 }) => {
-  const isMine = message.senderId === authUserId;
-  const readCount = (message.readBy ?? []).filter((id) => id !== authUserId).length;
+  const isMine = message.sender._id === authUserId;
+  const readCount = (message.readBy ?? []).filter((u) => u._id !== authUserId).length;
 
   return (
     <div

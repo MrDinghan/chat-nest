@@ -69,11 +69,11 @@ export function useScrollManager({
       prevCountRef.current = messages.length;
 
       const isUnread = (m: ConversationMessage) =>
-        !(m.readBy ?? []).includes(authUser!._id);
+        !(m.readBy ?? []).some((u) => u._id === authUser!._id);
 
       const firstUnread = messages.findIndex(
         (m) =>
-          m.senderId !== authUser?._id &&
+          m.sender._id !== authUser?._id &&
           isUnread(m) &&
           !m.pending &&
           !m.failed,
@@ -94,7 +94,7 @@ export function useScrollManager({
       let hasOwnNewMessage = false;
       for (let i = prevCountRef.current; i < messages.length; i++) {
         const msg = messages[i];
-        if (msg.senderId === authUser?._id || msg.pending) {
+        if (msg.sender._id === authUser?._id || msg.pending) {
           hasOwnNewMessage = true;
         } else if (!msg.failed && !isAtBottomRef.current) {
           addIncomingUnread(i);

@@ -1,11 +1,9 @@
 import {
-  ConversationLastMessageDto,
   ConversationResponseDto,
   CreateGroupRequest,
   FindOrCreateDmRequest,
   MessageResponseDto,
   SearchMessageResultDto,
-  UserSummaryDto,
 } from "@shared/types";
 import { Request as ExpressRequest } from "express";
 import mongoose from "mongoose";
@@ -33,15 +31,6 @@ import { HttpStatus } from "@/types/HttpStatus";
 
 import { BaseController } from "./base-controller";
 
-// senderId is populated, so it becomes UserSummaryDto object
-type PopulatedMsgLean = Omit<MessageResponseDto, "senderId"> & {
-  senderId: UserSummaryDto;
-};
-
-function toMsgDto(m: PopulatedMsgLean): MessageResponseDto {
-  return { ...m, senderId: m.senderId._id, sender: m.senderId };
-}
-
 interface UploadImageResponse {
   imageUrl: string;
 }
@@ -58,7 +47,8 @@ export class ConversationController extends BaseController {
 
     const conversations = await Conversation.find({ members: userId })
       .populate("members", "fullname profilePic _id")
-      .lean<ConversationResponseDto[]>();
+      .populate("owner", "fullname profilePic _id")
+      .lean();
 
     const convIds = conversations.map((c) => c._id);
 
@@ -70,15 +60,15 @@ export class ConversationController extends BaseController {
       lastAt?: Date;
       lastSenderId?: mongoose.Types.ObjectId;
     }>([
-      { $match: { conversationId: { $in: convIds } } },
+      { $match: { conversation: { $in: convIds } } },
       { $sort: { createdAt: -1 } },
       {
         $group: {
-          _id: "$conversationId",
+          _id: "$conversation",
           lastText: { $first: "$text" },
           lastImage: { $first: "$image" },
           lastAt: { $first: "$createdAt" },
-          lastSenderId: { $first: "$senderId" },
+          lastSenderId: { $first: "$sender" },
         },
       },
     ]);
@@ -108,7 +98,7 @@ export class ConversationController extends BaseController {
           senderName: m.lastSenderId
             ? senderMap.get(m.lastSenderId.toString())
             : void 0,
-        } satisfies ConversationLastMessageDto,
+        },
       ]),
     );
 
@@ -119,18 +109,18 @@ export class ConversationController extends BaseController {
     }>([
       {
         $match: {
-          conversationId: { $in: convIds },
-          senderId: { $ne: userId },
+          conversation: { $in: convIds },
+          sender: { $ne: userId },
           readBy: { $ne: userId },
         },
       },
-      { $group: { _id: "$conversationId", count: { $sum: 1 } } },
+      { $group: { _id: "$conversation", count: { $sum: 1 } } },
     ]);
     const unreadMap = new Map(
       unreadAgg.map((u) => [u._id.toString(), u.count]),
     );
 
-    const enriched: ConversationResponseDto[] = conversations.map((conv) => ({
+    const enriched = conversations.map((conv) => ({
       ...conv,
       lastMessage: lastMsgMap.get(conv._id.toString()),
       unreadCount: unreadMap.get(conv._id.toString()) ?? 0,
@@ -153,7 +143,8 @@ export class ConversationController extends BaseController {
       members: { $all: [userId, memberId], $size: 2 },
     })
       .populate("members", "fullname profilePic _id")
-      .lean<ConversationResponseDto>();
+      .populate("owner", "fullname profilePic _id")
+      .lean();
 
     if (existing) {
       const userSocketId = getReceiverSocketId(userId.toString());
@@ -174,7 +165,8 @@ export class ConversationController extends BaseController {
 
     const populated = await Conversation.findById(conv._id)
       .populate("members", "fullname profilePic _id")
-      .lean<ConversationResponseDto>();
+      .populate("owner", "fullname profilePic _id")
+      .lean();
 
     if (!populated) return this.fail("Failed to create conversation");
 
@@ -206,14 +198,15 @@ export class ConversationController extends BaseController {
     const conv = new Conversation({
       type: "group",
       name,
-      ownerId: userId,
+      owner: userId,
       members: allMembers,
     });
     await conv.save();
 
     const populated = await Conversation.findById(conv._id)
       .populate("members", "fullname profilePic _id")
-      .lean<ConversationResponseDto>();
+      .populate("owner", "fullname profilePic _id")
+      .lean();
 
     if (!populated) return this.fail("Group creation failed");
 
@@ -237,18 +230,20 @@ export class ConversationController extends BaseController {
   ): Promise<null> {
     const userId = req.user!._id;
 
-    const conv = await Conversation.findById(id);
+    const conv = await Conversation.findById(id)
+      .populate("owner", "fullname profilePic _id")
+      .lean();
     if (!conv) return this.fail("Conversation not found", HttpStatus.NOT_FOUND);
     if (conv.type !== "group")
       return this.fail("Only groups can be dissolved", HttpStatus.BAD_REQUEST);
-    if (conv.ownerId?.toString() !== userId.toString()) {
+    if (conv.owner?._id !== userId.toString()) {
       return this.fail(
         "Only the group owner can dissolve the group",
         HttpStatus.FORBIDDEN,
       );
     }
 
-    await Message.deleteMany({ conversationId: id });
+    await Message.deleteMany({ conversation: id });
     await Conversation.findByIdAndDelete(id);
 
     io.to(`conv:${id}`).emit("conversationDissolved", { conversationId: id });
@@ -265,11 +260,14 @@ export class ConversationController extends BaseController {
   ): Promise<ConversationResponseDto> {
     const userId = req.user!._id;
 
-    const conv = await Conversation.findById(id);
+    const conv = await Conversation.findById(id).populate(
+      "owner",
+      "fullname profilePic _id",
+    );
     if (!conv) return this.fail("Conversation not found", HttpStatus.NOT_FOUND);
     if (conv.type !== "group")
       return this.fail("Only groups have avatars", HttpStatus.BAD_REQUEST);
-    if (conv.ownerId?.toString() !== userId.toString()) {
+    if (conv.owner?._id !== userId.toString()) {
       return this.fail(
         "Only the group owner can update the avatar",
         HttpStatus.FORBIDDEN,
@@ -296,7 +294,8 @@ export class ConversationController extends BaseController {
 
     const populated = await Conversation.findById(id)
       .populate("members", "fullname profilePic _id")
-      .lean<ConversationResponseDto>();
+      .populate("owner", "fullname profilePic _id")
+      .lean();
 
     if (!populated)
       return this.fail("Conversation not found", HttpStatus.NOT_FOUND);
@@ -323,12 +322,13 @@ export class ConversationController extends BaseController {
       );
     }
 
-    const messages = await Message.find({ conversationId: id })
-      .populate("senderId", "fullname profilePic _id")
+    const messages = await Message.find({ conversation: id })
+      .populate("sender", "fullname profilePic _id")
+      .populate("readBy", "fullname profilePic _id")
       .sort({ createdAt: 1 })
-      .lean<PopulatedMsgLean[]>();
+      .lean();
 
-    return this.success(messages.map(toMsgDto));
+    return this.success(messages);
   }
 
   @Security("jwt")
@@ -378,7 +378,7 @@ export class ConversationController extends BaseController {
     const convMap = new Map(userConvs.map((c) => [c._id.toString(), c]));
 
     const messages = await Message.find({
-      conversationId: { $in: convIds },
+      conversation: { $in: convIds },
       text: { $regex: q, $options: "i" },
     })
       .sort({ createdAt: -1 })
@@ -386,8 +386,8 @@ export class ConversationController extends BaseController {
       .lean<
         {
           _id: mongoose.Types.ObjectId;
-          conversationId: mongoose.Types.ObjectId;
-          senderId: mongoose.Types.ObjectId;
+          conversation: mongoose.Types.ObjectId;
+          sender: mongoose.Types.ObjectId;
           text?: string;
           createdAt: Date;
         }[]
@@ -395,8 +395,8 @@ export class ConversationController extends BaseController {
 
     const neededUserIds = new Set<string>();
     for (const msg of messages) {
-      neededUserIds.add(msg.senderId.toString());
-      const conv = convMap.get(msg.conversationId.toString());
+      neededUserIds.add(msg.sender.toString());
+      const conv = convMap.get(msg.conversation.toString());
       if (conv?.type === "dm") {
         const otherId = conv.members
           .find((m) => m.toString() !== userId.toString())
@@ -416,10 +416,10 @@ export class ConversationController extends BaseController {
       >();
     const userMap = new Map(userDocs.map((u) => [u._id.toString(), u]));
 
-    const results: SearchMessageResultDto[] = messages.map((msg) => {
-      const conv = convMap.get(msg.conversationId.toString());
+    const results = messages.map((msg) => {
+      const conv = convMap.get(msg.conversation.toString());
       const isDm = conv?.type === "dm";
-      const sender = userMap.get(msg.senderId.toString());
+      const sender = userMap.get(msg.sender.toString());
 
       const otherMemberId = isDm
         ? conv?.members
@@ -428,7 +428,7 @@ export class ConversationController extends BaseController {
         : void 0;
       const otherUserDoc = otherMemberId ? userMap.get(otherMemberId) : void 0;
 
-      const otherUser: UserSummaryDto | undefined =
+      const otherUser =
         otherMemberId && otherUserDoc
           ? {
               _id: otherMemberId,
@@ -440,14 +440,14 @@ export class ConversationController extends BaseController {
       return {
         _id: msg._id.toString(),
         text: msg.text,
-        senderId: msg.senderId.toString(),
-        conversationId: msg.conversationId.toString(),
+        senderId: msg.sender.toString(),
+        conversationId: msg.conversation.toString(),
         createdAt: msg.createdAt.toISOString(),
         conversationType: conv?.type ?? "dm",
         conversationName: !isDm ? conv?.name : void 0,
         senderName: sender?.fullname,
         otherUser,
-      } satisfies SearchMessageResultDto;
+      };
     });
 
     return this.success(results);
