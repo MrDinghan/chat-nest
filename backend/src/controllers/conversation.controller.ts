@@ -365,14 +365,7 @@ export class ConversationController extends BaseController {
 
     const userConvs = await Conversation.find({ members: userId })
       .select("_id type name members")
-      .lean<
-        {
-          _id: mongoose.Types.ObjectId;
-          type: "dm" | "group";
-          name?: string;
-          members: mongoose.Types.ObjectId[];
-        }[]
-      >();
+      .lean();
 
     const convIds = userConvs.map((c) => c._id);
     const convMap = new Map(userConvs.map((c) => [c._id.toString(), c]));
@@ -383,15 +376,7 @@ export class ConversationController extends BaseController {
     })
       .sort({ createdAt: -1 })
       .limit(20)
-      .lean<
-        {
-          _id: mongoose.Types.ObjectId;
-          conversation: mongoose.Types.ObjectId;
-          sender: mongoose.Types.ObjectId;
-          text?: string;
-          createdAt: Date;
-        }[]
-      >();
+      .lean();
 
     const neededUserIds = new Set<string>();
     for (const msg of messages) {
@@ -407,13 +392,7 @@ export class ConversationController extends BaseController {
 
     const userDocs = await User.find({ _id: { $in: [...neededUserIds] } })
       .select("fullname profilePic")
-      .lean<
-        {
-          _id: mongoose.Types.ObjectId;
-          fullname: string;
-          profilePic?: string;
-        }[]
-      >();
+      .lean();
     const userMap = new Map(userDocs.map((u) => [u._id.toString(), u]));
 
     const results = messages.map((msg) => {
@@ -442,7 +421,7 @@ export class ConversationController extends BaseController {
         text: msg.text,
         senderId: msg.sender.toString(),
         conversationId: msg.conversation.toString(),
-        createdAt: msg.createdAt.toISOString(),
+        createdAt: msg.createdAt,
         conversationType: conv?.type ?? "dm",
         conversationName: !isDm ? conv?.name : void 0,
         senderName: sender?.fullname,
