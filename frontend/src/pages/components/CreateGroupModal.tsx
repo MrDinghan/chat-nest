@@ -8,6 +8,7 @@ import {
   getGetConversationListQueryKey,
 } from "@/api/endpoints/conversation";
 import { useGetUserList } from "@/api/endpoints/user";
+import Avatar from "@/components/Avatar";
 import { queryClient } from "@/lib/queryClient";
 import { useChatStore } from "@/stores/useChatStore";
 
@@ -91,7 +92,7 @@ const CreateGroupModal: FC<CreateGroupModalProps> = ({ onClose }) => {
             onChange={(e) => setSearch(e.target.value)}
           />
           {selectedIds.size > 0 && (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 pb-2">
               {[...selectedIds].map((id) => {
                 const user = users?.find((u) => u._id === id);
                 return (
@@ -123,10 +124,10 @@ const CreateGroupModal: FC<CreateGroupModalProps> = ({ onClose }) => {
                   checked={selectedIds.has(user._id)}
                   onChange={() => toggleMember(user._id)}
                 />
-                <img
-                  src={user.profilePic || "/avatar.png"}
-                  alt={user.fullname}
-                  className="size-8 rounded-full object-cover"
+                <Avatar
+                  src={user.profilePic}
+                  name={user.fullname}
+                  className="size-8 rounded-full"
                 />
                 <span className="font-medium">{user.fullname}</span>
               </label>

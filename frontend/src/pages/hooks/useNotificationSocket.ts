@@ -9,7 +9,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
-export function useNotificationSocket() {
+export const useNotificationSocket = () => {
   const { socket, authUser } = useAuthStore();
 
   useEffect(() => {

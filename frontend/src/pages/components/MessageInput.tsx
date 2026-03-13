@@ -148,7 +148,7 @@ const MessageInput: FC = () => {
       )}
 
       <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-        <div className="flex-1 flex gap-2">
+        <div className="flex-1 flex items-end gap-2">
           <TextareaAutosize
             minRows={1}
             maxRows={5}

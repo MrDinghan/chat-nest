@@ -18,6 +18,7 @@ import MessageSkeleton from "./skeletons/MessageSkeleton";
 const ChatContainer: FC = () => {
   const {
     selectedConversation,
+    setSelectedConversation,
     messages,
     setMessages,
     replaceMessage,
@@ -53,6 +54,17 @@ const ChatContainer: FC = () => {
   useEffect(() => {
     setMessages(fetchedMessages);
   }, [fetchedMessages, setMessages]);
+
+  useEffect(() => {
+    if (!socket || !selectedConversation) return;
+    const handler = ({ conversationId }: { conversationId: string }) => {
+      if (conversationId === selectedConversation._id) {
+        setSelectedConversation(void 0);
+      }
+    };
+    socket.on("conversationDissolved", handler);
+    return () => { socket.off("conversationDissolved", handler); };
+  }, [socket, selectedConversation, setSelectedConversation]);
 
   useEffect(
     () => subscribeToMessages(),
@@ -169,7 +181,9 @@ const ChatContainer: FC = () => {
                     message={message}
                     authUserId={authUser!._id}
                     authUserPic={authUser?.profilePic ?? ""}
+                    authUserName={authUser?.fullname ?? ""}
                     otherPic={otherMember?.profilePic ?? ""}
+                    otherName={otherMember?.fullname ?? ""}
                     imageSlides={imageSlides}
                     onRetry={handleRetry}
                     isFirstUnread={vItem.index === firstUnreadIndex}
@@ -184,6 +198,7 @@ const ChatContainer: FC = () => {
                         : void 0
                     }
                     conversationType={conversationType}
+                    totalMembers={selectedConversation?.members.length}
                   />
                 </div>
               );

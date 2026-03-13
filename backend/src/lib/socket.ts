@@ -66,6 +66,7 @@ io.on("connection", (socket) => {
       await newMessage.save();
 
       const msgDto = await Message.populate(newMessage, [
+        { path: "conversation", select: "_id type name avatar" },
         { path: "sender", select: "fullname profilePic _id" },
         { path: "readBy", select: "fullname profilePic _id" },
       ]);

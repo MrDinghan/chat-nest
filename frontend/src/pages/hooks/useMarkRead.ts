@@ -7,11 +7,11 @@ interface UseMarkReadReturn {
   observerRef: RefObject<IntersectionObserver | null>;
 }
 
-export function useMarkRead({
+export const useMarkRead = ({
   conversationId,
 }: {
   conversationId?: string;
-}): UseMarkReadReturn {
+}): UseMarkReadReturn => {
   const socket = useAuthStore((s) => s.socket);
   const { updateMessageReadBy } = useChatStore();
 

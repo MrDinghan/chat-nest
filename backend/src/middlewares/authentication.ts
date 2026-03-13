@@ -45,10 +45,7 @@ export async function expressAuthentication(
         return Promise.reject(new AuthenticationError("User not found"));
       }
 
-      return {
-        ...user.toObject(),
-        _id: user._id.toString(),
-      };
+      return user;
     } catch (error) {
       console.error("Error during token verification: ", error);
       return Promise.reject(new AuthenticationError("Invalid token"));

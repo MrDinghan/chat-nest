@@ -6,11 +6,14 @@ import type { UserResponseDto } from "@/api/endpoints/chatNestAPI.schemas";
 import {
   findOrCreateDm,
   getGetConversationListQueryKey,
+  useGetConversationList,
   useSearch,
 } from "@/api/endpoints/conversation";
 import { useGetUserList } from "@/api/endpoints/user";
+import Avatar from "@/components/Avatar";
 import { queryClient } from "@/lib/queryClient";
 import { formatChatTime } from "@/lib/utils";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
 interface SearchBarProps {
@@ -24,6 +27,7 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { setSelectedConversation, setPendingScrollToMessageId } =
     useChatStore();
+  const authUserId = useAuthStore((s) => s.authUser?._id);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -57,6 +61,7 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
   }, []);
 
   const { data: allUsers } = useGetUserList();
+  const { data: allConversations } = useGetConversationList();
   const { data: messageResults } = useSearch(
     { q: debouncedQuery },
     {
@@ -73,8 +78,16 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
       return u.fullname.toLowerCase().includes(debouncedQuery.toLowerCase());
     }) ?? [];
 
+  const groupResults =
+    allConversations?.filter((c) => {
+      if (!debouncedQuery || c.type !== "group") return false;
+      return (c.name ?? "").toLowerCase().includes(debouncedQuery.toLowerCase());
+    }) ?? [];
+
   const hasResults =
-    userResults.length > 0 || (messageResults?.length ?? 0) > 0;
+    userResults.length > 0 ||
+    groupResults.length > 0 ||
+    (messageResults?.length ?? 0) > 0;
 
   const handleSelectUser = async (user: UserResponseDto) => {
     setQuery("");
@@ -144,13 +157,40 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
                       onClick={() => handleSelectUser(user)}
                       className="w-full flex items-center gap-3 px-3 py-2 hover:bg-base-200 transition-colors text-left"
                     >
-                      <img
-                        src={user.profilePic || "/avatar.png"}
-                        alt={user.fullname}
-                        className="size-8 rounded-full object-cover shrink-0"
+                      <Avatar
+                        src={user.profilePic}
+                        name={user.fullname}
+                        className="size-8 rounded-full shrink-0"
                       />
                       <span className="text-sm font-medium truncate">
                         {user.fullname}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {groupResults.length > 0 && (
+                <div>
+                  <div className="px-3 py-1.5 text-xs font-semibold text-base-content/50 uppercase tracking-wide border-b border-base-200">
+                    Groups
+                  </div>
+                  {groupResults.map((conv) => (
+                    <button
+                      key={conv._id}
+                      onClick={() => {
+                        setQuery("");
+                        setSelectedConversation(conv);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-base-200 transition-colors text-left"
+                    >
+                      <Avatar
+                        src={conv.avatar}
+                        name={conv.name ?? "Group"}
+                        className="size-8 rounded-full shrink-0"
+                      />
+                      <span className="text-sm font-medium truncate">
+                        {conv.name}
                       </span>
                     </button>
                   ))}
@@ -164,16 +204,14 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
                   </div>
                   {messageResults!.map((msg) => {
                     const isGroup = msg.conversationType === "group";
-                    const pic = isGroup
-                      ? void 0
-                      : msg.otherUser?.profilePic || "/avatar.png";
+                    const pic = isGroup ? void 0 : msg.otherUser?.profilePic;
                     const name = isGroup
                       ? (msg.conversationName ?? "Group")
                       : (msg.otherUser?.fullname ?? "");
-                    const preview =
-                      isGroup && msg.senderName
-                        ? `${msg.senderName}: ${msg.text ?? ""}`
-                        : (msg.text ?? "");
+                    const senderLabel = msg.senderId === authUserId
+                      ? "You"
+                      : (msg.senderName ?? "");
+                    const preview = `${senderLabel}: ${msg.text ?? ""}`;
 
                     return (
                       <button
@@ -181,17 +219,11 @@ const SearchBar: FC<SearchBarProps> = ({ className }) => {
                         onClick={() => handleSelectMessage(msg)}
                         className="w-full flex items-center gap-3 px-3 py-2 hover:bg-base-200 transition-colors text-left"
                       >
-                        {pic ? (
-                          <img
-                            src={pic}
-                            alt={name}
-                            className="size-8 rounded-full object-cover shrink-0"
-                          />
-                        ) : (
-                          <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-sm font-bold text-primary">
-                            {name[0]?.toUpperCase() ?? "G"}
-                          </div>
-                        )}
+                        <Avatar
+                          src={pic}
+                          name={name}
+                          className="size-8 rounded-full shrink-0"
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate">
                             {name}

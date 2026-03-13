@@ -1,6 +1,7 @@
 import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
 import type { FC } from "react";
 
+import Avatar from "@/components/Avatar";
 import { formatChatTime } from "@/lib/utils";
 import type { ConversationMessage } from "@/stores/useChatStore";
 
@@ -11,29 +12,38 @@ interface MessageBubbleProps {
   message: ConversationMessage;
   authUserId: string;
   authUserPic: string;
+  authUserName?: string;
   otherPic: string;
+  otherName?: string;
   imageSlides: { src: string }[];
   onRetry: (message: ConversationMessage) => void;
   isFirstUnread: boolean;
   isHighlighted?: boolean;
   showSenderInfo?: { name: string; pic: string };
   conversationType: "dm" | "group";
+  totalMembers?: number;
 }
 
 const MessageBubble: FC<MessageBubbleProps> = ({
   message,
   authUserId,
   authUserPic,
+  authUserName = "",
   otherPic,
+  otherName = "",
   imageSlides,
   onRetry,
   isFirstUnread,
   isHighlighted,
   showSenderInfo,
   conversationType,
+  totalMembers,
 }) => {
   const isMine = message.sender._id === authUserId;
-  const readCount = (message.readBy ?? []).filter((u) => u._id !== authUserId).length;
+  const readCount = (message.readBy ?? []).filter(
+    (u) => u._id !== authUserId,
+  ).length;
+  const allRead = conversationType === "group" && totalMembers != null && readCount >= totalMembers - 1;
 
   return (
     <div
@@ -51,19 +61,18 @@ const MessageBubble: FC<MessageBubbleProps> = ({
       <div className={`chat ${isMine ? "chat-end" : "chat-start"} group`}>
         <div className="chat-image avatar">
           <div className="size-10 rounded-full border">
-            <img
-              src={
-                isMine
-                  ? authUserPic || "/avatar.png"
-                  : showSenderInfo?.pic || otherPic || "/avatar.png"
-              }
-              alt="profile pic"
+            <Avatar
+              src={isMine ? authUserPic : showSenderInfo?.pic || otherPic}
+              name={isMine ? authUserName : (showSenderInfo?.name ?? otherName)}
+              className="w-full h-full rounded-full"
             />
           </div>
         </div>
         <div className="chat-header mb-1">
           {showSenderInfo && !isMine && (
-            <span className="text-xs font-medium mr-1">{showSenderInfo.name}</span>
+            <span className="text-xs font-medium mr-1">
+              {showSenderInfo.name}
+            </span>
           )}
           <time className="text-xs opacity-50 ml-1">
             {formatChatTime(message.createdAt, true)}
@@ -74,15 +83,25 @@ const MessageBubble: FC<MessageBubbleProps> = ({
             {!message.pending && !message.failed && (
               <div className="shrink-0 mb-1">
                 {conversationType === "group" ? (
-                  readCount > 0 ? (
-                    <span className="text-xs text-base-content/40">{readCount} read</span>
-                  ) : null
-                ) : (
-                  readCount > 0 ? (
+                  allRead ? (
                     <CheckCircle2 size={14} className="text-success" strokeWidth={2} />
-                  ) : (
-                    <Circle size={14} className="text-base-content/30" strokeWidth={1.5} />
-                  )
+                  ) : readCount > 0 ? (
+                    <span className="text-xs text-base-content/40">
+                      {readCount} read
+                    </span>
+                  ) : null
+                ) : readCount > 0 ? (
+                  <CheckCircle2
+                    size={14}
+                    className="text-success"
+                    strokeWidth={2}
+                  />
+                ) : (
+                  <Circle
+                    size={14}
+                    className="text-base-content/30"
+                    strokeWidth={1.5}
+                  />
                 )}
               </div>
             )}

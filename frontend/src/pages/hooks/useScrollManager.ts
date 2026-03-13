@@ -11,11 +11,11 @@ interface UseScrollManagerParams {
   scrollToIndex: (index: number, options?: ScrollToOptions) => void;
 }
 
-export function useScrollManager({
+export const useScrollManager = ({
   messages,
   selectedUserId,
   scrollToIndex,
-}: UseScrollManagerParams) {
+}: UseScrollManagerParams) => {
   const {
     addIncomingUnread,
     clearIncomingUnread,
@@ -61,12 +61,13 @@ export function useScrollManager({
 
   useEffect(() => {
     const el = scrollContainerRef.current;
-    if (!el || !messages?.length) return;
+    if (!el) return;
 
     // Initial load
     if (!initDoneRef.current) {
       initDoneRef.current = true;
-      prevCountRef.current = messages.length;
+      prevCountRef.current = messages?.length ?? 0;
+      if (!messages?.length) return; // No messages to scroll to
 
       const isUnread = (m: ConversationMessage) =>
         !(m.readBy ?? []).some((u) => u._id === authUser!._id);
@@ -90,7 +91,7 @@ export function useScrollManager({
     }
 
     // New messages arrived
-    if (messages.length > prevCountRef.current) {
+    if (messages?.length && messages.length > prevCountRef.current) {
       let hasOwnNewMessage = false;
       for (let i = prevCountRef.current; i < messages.length; i++) {
         const msg = messages[i];
@@ -141,4 +142,4 @@ export function useScrollManager({
   }, [highlightedMessageId, setHighlightedMessageId]);
 
   return { scrollContainerRef, bottomSentinelRef };
-}
+};

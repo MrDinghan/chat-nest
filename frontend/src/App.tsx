@@ -11,7 +11,7 @@ import routes from "~react-pages";
 import Navbar from "./components/Navbar";
 import { useThemeStore } from "./stores/useThemeStore";
 
-function App() {
+const App = () => {
   const pages = useRoutes(routes);
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -31,6 +31,10 @@ function App() {
   }, [navigate]);
 
   useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
     setAuthUser(authUser);
     connectSocket();
   }, [authUser, setAuthUser, connectSocket]);
@@ -43,7 +47,7 @@ function App() {
     );
 
   return (
-    <div data-theme={theme}>
+    <div>
       <Toaster />
       <Navbar />
       {pages}

@@ -2,6 +2,7 @@ import type {
   ReactionDto,
   MessageResponseDto,
   ConversationResponseDto,
+  UserResponseDto,
   UserSummaryDto,
 } from "./types";
 
@@ -17,6 +18,8 @@ export interface ServerToClientEvents {
   conversationUpdated: (conv: ConversationDto) => void;
   conversationDissolved: (data: { conversationId: string }) => void;
   conversationCreated: (conv: ConversationDto) => void;
+  userUpdated: (user: UserResponseDto) => void;
+  userCreated: (user: UserResponseDto) => void;
 }
 
 export interface ClientToServerEvents {

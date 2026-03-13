@@ -14,6 +14,7 @@ import {
 } from "tsoa";
 
 import cloudinary from "@/lib/cloudinary";
+import { io } from "@/lib/socket";
 import { generateToken } from "@/lib/utils";
 import User from "@/models/user.model";
 import { HttpStatus } from "@/types/HttpStatus";
@@ -54,6 +55,7 @@ export class AuthController extends BaseController {
       this.setTokenCookie(req.res, token);
     }
     await newUser.save();
+    io.emit("userCreated", newUser.toObject());
     return this.success(newUser.toObject(), void 0, HttpStatus.CREATED);
   }
 
@@ -117,6 +119,7 @@ export class AuthController extends BaseController {
       { profilePic: uploadResponse.secure_url },
       { new: true },
     );
+    io.emit("userUpdated", updatedUser!.toObject());
     return this.success(updatedUser!.toObject());
   }
 

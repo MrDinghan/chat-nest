@@ -1,4 +1,4 @@
-import { SquarePen, Users } from "lucide-react";
+import { MessageSquare, Plus, Users } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
 
 import type {
@@ -10,7 +10,8 @@ import {
   useGetConversationList,
 } from "@/api/endpoints/conversation";
 import { findOrCreateDm } from "@/api/endpoints/conversation";
-import { useGetUserList } from "@/api/endpoints/user";
+import { getGetUserListQueryKey, useGetUserList } from "@/api/endpoints/user";
+import Avatar from "@/components/Avatar";
 import { queryClient } from "@/lib/queryClient";
 import { formatChatTime } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -20,11 +21,16 @@ import CreateGroupModal from "./CreateGroupModal";
 import SearchBar from "./SearchBar";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 
+enum SidebarTab {
+  Chats = "chats",
+  People = "people",
+}
+
 const Sidebar: FC = () => {
   const { selectedConversation, setSelectedConversation } = useChatStore();
   const { onlineUsers, socket, authUser } = useAuthStore();
   const [showCreateGroup, setShowCreateGroup] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chats" | "people">("chats");
+  const [activeTab, setActiveTab] = useState(SidebarTab.Chats);
 
   useEffect(() => {
     if (!socket) return;
@@ -36,10 +42,21 @@ const Sidebar: FC = () => {
     socket.on("newMessage", handler);
     socket.on("conversationCreated", handler);
     socket.on("messagesRead", handler);
+    socket.on("conversationDissolved", handler);
+    socket.on("userUpdated", handler);
+    const userListHandler = () => {
+      queryClient.invalidateQueries({ queryKey: getGetUserListQueryKey() });
+    };
+    socket.on("userCreated", userListHandler);
+    socket.on("userUpdated", userListHandler);
     return () => {
       socket.off("newMessage", handler);
       socket.off("conversationCreated", handler);
       socket.off("messagesRead", handler);
+      socket.off("conversationDissolved", handler);
+      socket.off("userUpdated", handler);
+      socket.off("userCreated", userListHandler);
+      socket.off("userUpdated", userListHandler);
     };
   }, [socket]);
 
@@ -47,9 +64,9 @@ const Sidebar: FC = () => {
     useGetConversationList();
   const { data: users, isLoading: isUsersLoading } = useGetUserList();
 
-  const isLoading = activeTab === "chats" ? isConvsLoading : isUsersLoading;
+  const isLoading = activeTab === SidebarTab.Chats ? isConvsLoading : isUsersLoading;
 
-  if (isLoading && activeTab === "chats" && !conversations) {
+  if (isLoading && activeTab === SidebarTab.Chats && !conversations) {
     return <SidebarSkeleton />;
   }
 
@@ -60,9 +77,9 @@ const Sidebar: FC = () => {
   };
 
   const getConvDisplayPic = (conv: ConversationResponseDto) => {
-    if (conv.type === "group") return conv.avatar || "/avatar.png";
+    if (conv.type === "group") return conv.avatar;
     const other = conv.members.find((m) => m._id !== authUser?._id);
-    return other?.profilePic || "/avatar.png";
+    return other?.profilePic;
   };
 
   const getOtherMember = (conv: ConversationResponseDto) =>
@@ -72,6 +89,7 @@ const Sidebar: FC = () => {
     try {
       const conv = await findOrCreateDm({ memberId: user._id });
       setSelectedConversation(conv);
+      setActiveTab(SidebarTab.Chats);
       queryClient.invalidateQueries({
         queryKey: getGetConversationListQueryKey(),
       });
@@ -95,33 +113,39 @@ const Sidebar: FC = () => {
       <aside className="h-full w-full lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
         <div className="border-b border-base-300 w-full p-5">
           <div className="flex items-center justify-between gap-2">
-            <span className="font-medium text-lg">
-              {activeTab === "chats" ? "Chats" : "People"}
-            </span>
+            <div className="flex items-center gap-2">
+              <Avatar
+                src={authUser?.profilePic}
+                name={authUser?.fullname ?? ""}
+                className="size-12 rounded-full"
+              />
+              <span className="font-medium">{authUser?.fullname}</span>
+            </div>
             <button
               className="btn btn-ghost btn-sm btn-circle"
               onClick={() => setShowCreateGroup(true)}
               title="Create group"
             >
-              <SquarePen className="size-5" />
+              <Plus className="size-5" />
             </button>
           </div>
           {/* Tabs */}
           <div className="flex gap-1 mt-3">
             <button
-              onClick={() => setActiveTab("chats")}
-              className={`flex-1 text-sm py-1 rounded-lg transition-colors ${
-                activeTab === "chats"
+              onClick={() => setActiveTab(SidebarTab.Chats)}
+              className={`flex-1 text-sm py-1 rounded-lg transition-colors flex items-center justify-center gap-1 ${
+                activeTab === SidebarTab.Chats
                   ? "bg-primary text-primary-content"
                   : "hover:bg-base-200"
               }`}
             >
+              <MessageSquare className="size-3.5" />
               Chats
             </button>
             <button
-              onClick={() => setActiveTab("people")}
+              onClick={() => setActiveTab(SidebarTab.People)}
               className={`flex-1 text-sm py-1 rounded-lg transition-colors flex items-center justify-center gap-1 ${
-                activeTab === "people"
+                activeTab === SidebarTab.People
                   ? "bg-primary text-primary-content"
                   : "hover:bg-base-200"
               }`}
@@ -138,7 +162,7 @@ const Sidebar: FC = () => {
         </div>
 
         <div className="overflow-y-auto w-full py-3">
-          {activeTab === "chats" ? (
+          {activeTab === SidebarTab.Chats ? (
             <>
               {sortedConversations.map((conv) => {
                 const isSelected = selectedConversation?._id === conv._id;
@@ -159,10 +183,10 @@ const Sidebar: FC = () => {
                     }`}
                   >
                     <div className="relative mx-0">
-                      <img
+                      <Avatar
                         src={displayPic}
-                        alt={displayName}
-                        className="size-12 object-cover rounded-full"
+                        name={displayName}
+                        className="size-12 rounded-full"
                       />
                       {isOnline && (
                         <span className="absolute bottom-0 right-0 size-2 bg-green-500 rounded-full ring-2 ring-zinc-900" />
@@ -215,10 +239,10 @@ const Sidebar: FC = () => {
                   className="w-full p-3 flex items-center gap-3 hover:bg-base-300 transition-colors"
                 >
                   <div className="relative mx-0">
-                    <img
-                      src={user.profilePic || "/avatar.png"}
-                      alt={user.fullname}
-                      className="size-12 object-cover rounded-full"
+                    <Avatar
+                      src={user.profilePic}
+                      name={user.fullname}
+                      className="size-12 rounded-full"
                     />
                     {onlineUsers.includes(user._id) && (
                       <span className="absolute bottom-0 right-0 size-2 bg-green-500 rounded-full ring-2 ring-zinc-900" />

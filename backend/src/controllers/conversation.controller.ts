@@ -236,7 +236,7 @@ export class ConversationController extends BaseController {
     if (!conv) return this.fail("Conversation not found", HttpStatus.NOT_FOUND);
     if (conv.type !== "group")
       return this.fail("Only groups can be dissolved", HttpStatus.BAD_REQUEST);
-    if (conv.owner?._id !== userId.toString()) {
+    if (conv.owner?._id.toString() !== userId.toString()) {
       return this.fail(
         "Only the group owner can dissolve the group",
         HttpStatus.FORBIDDEN,
@@ -267,7 +267,7 @@ export class ConversationController extends BaseController {
     if (!conv) return this.fail("Conversation not found", HttpStatus.NOT_FOUND);
     if (conv.type !== "group")
       return this.fail("Only groups have avatars", HttpStatus.BAD_REQUEST);
-    if (conv.owner?._id !== userId.toString()) {
+    if (conv.owner?._id.toString() !== userId.toString()) {
       return this.fail(
         "Only the group owner can update the avatar",
         HttpStatus.FORBIDDEN,

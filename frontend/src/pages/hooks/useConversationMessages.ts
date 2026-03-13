@@ -4,7 +4,7 @@ import { useGetMessages } from "@/api/endpoints/conversation";
 import type { ConversationMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
 
-export function useConversationMessages() {
+export const useConversationMessages = () => {
   const { selectedConversation } = useChatStore();
 
   const query = useGetMessages(selectedConversation?._id ?? "", {
