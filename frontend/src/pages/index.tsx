@@ -1,6 +1,6 @@
 import { type FC, useEffect } from "react";
 
-import { requestNotificationPermission } from "@/lib/notification";
+import { registerServiceWorker, requestNotificationPermission } from "@/lib/notification";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 
@@ -18,7 +18,7 @@ const HomePage: FC = () => {
   useNotificationSocket();
 
   useEffect(() => {
-    requestNotificationPermission();
+    registerServiceWorker().then(() => requestNotificationPermission());
   }, []);
 
   // cache profile pictures to improve performance

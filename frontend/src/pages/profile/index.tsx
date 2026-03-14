@@ -7,7 +7,7 @@ import Avatar from "@/components/Avatar";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 const ProfilePage = () => {
-  const { authUser } = useAuthStore();
+  const { authUser, setAuthUser } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
   const { mutate: updateProfile, isPending: isUpdatingProfile } =
     useUpdateProfile();
@@ -23,7 +23,12 @@ const ProfilePage = () => {
     }
 
     setSelectedImg(URL.createObjectURL(file));
-    updateProfile({ data: { file } });
+    updateProfile({ data: { file } }, {
+      onSuccess: (updatedUser) => {
+        setAuthUser(updatedUser);
+        setSelectedImg(null);
+      },
+    });
   };
 
   return (

@@ -63,7 +63,9 @@ const ChatContainer: FC = () => {
       }
     };
     socket.on("conversationDissolved", handler);
-    return () => { socket.off("conversationDissolved", handler); };
+    return () => {
+      socket.off("conversationDissolved", handler);
+    };
   }, [socket, selectedConversation, setSelectedConversation]);
 
   useEffect(

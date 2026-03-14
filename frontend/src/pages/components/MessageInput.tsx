@@ -3,7 +3,11 @@ import { type FC, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import TextareaAutosize from "react-textarea-autosize";
 
-import { uploadImage } from "@/api/endpoints/conversation";
+import {
+  getGetConversationListQueryKey,
+  uploadImage,
+} from "@/api/endpoints/conversation";
+import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { ConversationMessage } from "@/stores/useChatStore";
 import { useChatStore } from "@/stores/useChatStore";
@@ -55,6 +59,7 @@ const MessageInput: FC = () => {
           markMessageFailed(tempId);
         } else {
           replaceMessage(tempId, result as ConversationMessage);
+          queryClient.invalidateQueries({ queryKey: getGetConversationListQueryKey() });
         }
       },
     );
