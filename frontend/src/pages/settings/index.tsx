@@ -1,5 +1,6 @@
 import { Send } from "lucide-react";
 
+import Avatar from "@/components/Avatar";
 import { THEMES } from "@/constants";
 import { useThemeStore } from "@/stores/useThemeStore";
 
@@ -16,7 +17,7 @@ const SettingsPage = () => {
   const { theme, setTheme } = useThemeStore();
 
   return (
-    <div className="h-screen container mx-auto px-4 pt-20 max-w-5xl">
+    <div className="min-h-screen container mx-auto px-4 pt-20 max-w-5xl">
       <div className="space-y-6">
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold">Theme</h2>
@@ -63,13 +64,8 @@ const SettingsPage = () => {
                 {/* Chat Header */}
                 <div className="px-4 py-3 border-b border-base-300 bg-base-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-medium">
-                      J
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-sm">John Doe</h3>
-                      <p className="text-xs text-base-content/70">Online</p>
-                    </div>
+                    <Avatar name="John Doe" className="size-8 rounded-full" />
+                    <h3 className="font-medium text-sm">John Doe</h3>
                   </div>
                 </div>
 
@@ -93,7 +89,7 @@ const SettingsPage = () => {
                             ${message.isSent ? "text-primary-content/70" : "text-base-content/70"}
                           `}
                         >
-                          12:00 PM
+                          14:00
                         </p>
                       </div>
                     </div>

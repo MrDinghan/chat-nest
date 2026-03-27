@@ -10,14 +10,17 @@ export default defineConfig({
     Pages({
       dirs: "src/pages",
       extensions: ["tsx", "jsx"],
+      exclude: ["**/components/**", "**/hooks/**"],
     }),
   ],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@shared": fileURLToPath(new URL("../shared", import.meta.url)),
     },
   },
   server: {
+    host: true,
     open: true,
     proxy: {
       "/api": {

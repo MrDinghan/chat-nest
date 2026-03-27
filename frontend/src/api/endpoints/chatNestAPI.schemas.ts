@@ -5,89 +5,171 @@
  * API for ChatNest chat application
  * OpenAPI spec version: 1.0.0
  */
-export interface UserResponseDto {
-  /** User email */
-  email: string;
-  /** User fullname */
-  fullname: string;
-  /** User password */
-  password: string;
-  /** User profile picture */
-  profilePic?: string;
-  /** MongoDB Object ID */
-  _id: string;
-  /** Created timestamp */
-  createdAt: string;
-  /** Updated timestamp */
-  updatedAt: string;
-}
-
-export type MongooseTypesObjectId = string;
-
-export interface MessageResponseDto {
-  /** Message content */
-  text?: string;
-  /** Message image URL */
-  image?: string;
-  /** Sender's user ID */
-  senderId: MongooseTypesObjectId;
-  /** Receiver's user ID */
-  receiverId: MongooseTypesObjectId;
-  /** MongoDB Object ID */
-  _id: string;
-  /** Created timestamp */
-  createdAt: string;
-  /** Updated timestamp */
-  updatedAt: string;
-}
-
-export interface IUserDTO {
-  /** User email */
-  email: string;
-  /** User fullname */
-  fullname: string;
-  /** User password */
-  password: string;
-  /** User profile picture */
-  profilePic?: string;
-}
-
 /**
  * From T, pick a set of properties whose keys are in the union K
  */
-export interface PickIUserDTOEmailOrPassword {
-  /** User email */
+export interface PickIUserSchemaExcludeKeyofIUserSchemaPassword {
   email: string;
-  /** User password */
-  password: string;
-}
-
-/**
- * From T, pick a set of properties whose keys are in the union K
- */
-export interface PickUserResponseDtoExcludeKeyofUserResponseDtoPassword {
-  /** User email */
-  email: string;
-  /** MongoDB Object ID */
-  _id: string;
-  /** Created timestamp */
-  createdAt: string;
-  /** Updated timestamp */
-  updatedAt: string;
-  /** User fullname */
   fullname: string;
-  /** User profile picture */
   profilePic?: string;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
  * Construct a type with the properties of T except for those in type K.
  */
-export type OmitUserResponseDtoPassword = PickUserResponseDtoExcludeKeyofUserResponseDtoPassword;
+export type OmitIUserSchemaPassword = PickIUserSchemaExcludeKeyofIUserSchemaPassword;
 
-export type PostMessageBody = {
+/**
+ * GET /user/list response (without password)
+ */
+export type UserResponseDto = PickIUserSchemaExcludeKeyofIUserSchemaPassword;
+
+export interface ConversationLastMessageDto {
   text?: string;
+  image?: string;
+  createdAt?: string;
+  senderName?: string;
+}
+
+export type ConversationType = typeof ConversationType[keyof typeof ConversationType];
+
+
+export const ConversationType = {
+  dm: 'dm',
+  group: 'group',
+} as const;
+
+/**
+ * From T, pick a set of properties whose keys are in the union K
+ */
+export interface PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt {
+  fullname: string;
+  profilePic?: string;
+  _id: string;
+}
+
+/**
+ * Construct a type with the properties of T except for those in type K.
+ */
+export type OmitUserResponseDtoEmailOrCreatedAtOrUpdatedAt = PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
+
+/**
+ * Public user info referenced in other DTOs
+ */
+export type UserSummaryDto = PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
+
+/**
+ * GET /conversation/list response
+ */
+export interface ConversationResponseDto {
+  type: ConversationType;
+  members: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt[];
+  name?: string;
+  avatar?: string;
+  owner?: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMessage?: ConversationLastMessageDto;
+  unreadCount?: number;
+}
+
+export interface FindOrCreateDmRequest {
+  memberId: string;
+}
+
+export interface CreateGroupRequest {
+  name: string;
+  memberIds: string[];
+}
+
+/**
+ * Mongoose schema generic: new Schema<IConversationSchema>()
+ */
+export interface IConversationSchema {
+  type: ConversationType;
+  members: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt[];
+  name?: string;
+  avatar?: string;
+  owner?: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReactionDto {
+  emoji: string;
+  userId: string;
+}
+
+/**
+ * GET /conversation/:id/messages response (with populated sender)
+ */
+export interface MessageResponseDto {
+  conversation: IConversationSchema;
+  sender: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
+  text?: string;
+  image?: string;
+  readBy: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt[];
+  reactions: ReactionDto[];
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UploadImageResponse {
+  imageUrl: string;
+}
+
+export interface SearchMessageResultDto {
+  _id: string;
+  text?: string;
+  senderId: string;
+  conversationId: string;
+  createdAt: string;
+  conversationType: ConversationType;
+  conversationName?: string;
+  senderName?: string;
+  otherUser?: PickUserResponseDtoExcludeKeyofUserResponseDtoEmailOrCreatedAtOrUpdatedAt;
+}
+
+export interface IUser {
+  email: string;
+  fullname: string;
+  password: string;
+  profilePic?: string;
+}
+
+/**
+ * From T, pick a set of properties whose keys are in the union K
+ */
+export interface PickIUserEmailOrPassword {
+  password: string;
+  email: string;
+}
+
+/**
+ * @nullable
+ */
+export type DissolveConversation200 = typeof DissolveConversation200[keyof typeof DissolveConversation200] | null;
+
+
+export const DissolveConversation200 = {
+} as const;
+
+export type UpdateGroupAvatarBody = {
   image?: Blob;
+};
+
+export type UploadImageBody = {
+  image?: Blob;
+};
+
+export type SearchParams = {
+q: string;
 };
 
 /**

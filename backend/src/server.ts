@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 setCloudinary();
 
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
 const upload = multer({

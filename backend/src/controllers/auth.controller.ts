@@ -1,3 +1,4 @@
+import type { IUser, UserResponseDto } from "@shared/types";
 import bcrypt from "bcryptjs";
 import { Request as ExpressRequest } from "express";
 import {
@@ -13,10 +14,9 @@ import {
 } from "tsoa";
 
 import cloudinary from "@/lib/cloudinary";
+import { io } from "@/lib/socket";
 import { generateToken } from "@/lib/utils";
-import { IUserDTO } from "@/models/user.dto";
 import User from "@/models/user.model";
-import { UserResponseDto } from "@/models/user.response.dto";
 import { HttpStatus } from "@/types/HttpStatus";
 
 import { BaseController } from "./base-controller";
@@ -26,7 +26,7 @@ import { BaseController } from "./base-controller";
 export class AuthController extends BaseController {
   @Post("signup")
   public async signup(
-    @Body() body: IUserDTO,
+    @Body() body: IUser,
     @Request() req: ExpressRequest,
   ): Promise<UserResponseDto> {
     const { email, fullname, password, profilePic } = body;
@@ -50,17 +50,18 @@ export class AuthController extends BaseController {
     if (!newUser) {
       return this.fail("Failed to create user");
     }
-    const token = generateToken(newUser._id);
+    const token = generateToken(newUser._id.toString());
     if (req.res) {
       this.setTokenCookie(req.res, token);
     }
     await newUser.save();
-    return this.success(newUser.toObject(), undefined, HttpStatus.CREATED);
+    io.emit("userCreated", newUser.toObject());
+    return this.success(newUser.toObject(), void 0, HttpStatus.CREATED);
   }
 
   @Post("login")
   public async login(
-    @Body() body: Pick<IUserDTO, "email" | "password">,
+    @Body() body: Pick<IUser, "email" | "password">,
     @Request() req: ExpressRequest,
   ): Promise<UserResponseDto> {
     const { email, password } = body;
@@ -72,7 +73,7 @@ export class AuthController extends BaseController {
     if (!isPasswordValid) {
       return this.fail("Invalid password");
     }
-    const token = generateToken(user._id);
+    const token = generateToken(user._id.toString());
     if (req.res) {
       this.setTokenCookie(req.res, token);
     }
@@ -118,6 +119,7 @@ export class AuthController extends BaseController {
       { profilePic: uploadResponse.secure_url },
       { new: true },
     );
+    io.emit("userUpdated", updatedUser!.toObject());
     return this.success(updatedUser!.toObject());
   }
 
@@ -125,7 +127,7 @@ export class AuthController extends BaseController {
   @Get("checkAuth")
   public async checkAuth(
     @Request() req: ExpressRequest,
-  ): Promise<Omit<UserResponseDto, "password">> {
+  ): Promise<UserResponseDto> {
     const currentUser = req.user!;
     return this.success(currentUser);
   }

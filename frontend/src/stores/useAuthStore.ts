@@ -1,35 +1,41 @@
-import { io, Socket } from "socket.io-client";
+import type {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@shared/socket-events";
+import type { UserResponseDto as OmitUserResponseDtoPassword } from "@shared/types";
+import type { Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { create } from "zustand";
 
-import type { OmitUserResponseDtoPassword } from "@/api/endpoints/chatNestAPI.schemas";
+export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 interface AuthState {
   authUser?: OmitUserResponseDtoPassword;
   setAuthUser: (user?: OmitUserResponseDtoPassword) => void;
   onlineUsers: string[];
-  socket?: Socket;
+  socket?: AppSocket;
   connectSocket: () => void;
   disconnectSocket: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  authUser: undefined,
+  authUser: void 0,
   setAuthUser: (user) => set({ authUser: user }),
   onlineUsers: [],
   connectSocket: () => {
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
 
-    const socket = io({
+    const socket: AppSocket = io({
       query: {
         userId: authUser._id,
       },
     });
     socket.connect();
 
-    set({ socket: socket });
+    set({ socket });
 
-    socket.on("getOnlineUsers", (userIds: string[]) => {
+    socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
   },

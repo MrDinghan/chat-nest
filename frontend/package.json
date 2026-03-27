@@ -11,15 +11,21 @@
     "generate:api": "orval"
   },
   "dependencies": {
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
     "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-virtual": "^3.13.21",
     "axios": "^1.13.4",
+    "dayjs": "^1.11.19",
     "lucide-react": "^0.563.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.71.1",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.0",
+    "react-textarea-autosize": "^8.5.9",
     "socket.io-client": "^4.8.3",
+    "yet-another-react-lightbox": "^3.29.1",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

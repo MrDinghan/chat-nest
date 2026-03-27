@@ -1,8 +1,7 @@
+import type { IUserSchema } from "@shared/types";
 import mongoose from "mongoose";
 
-import { UserResponseDto } from "./user.response.dto";
-
-const userSchema = new mongoose.Schema<UserResponseDto>(
+const userSchema = new mongoose.Schema<IUserSchema>(
   {
     email: { type: String, required: true, unique: true },
     fullname: { type: String, required: true },

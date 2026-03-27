@@ -3,10 +3,11 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { useUpdateProfile } from "@/api/endpoints/auth";
+import Avatar from "@/components/Avatar";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 const ProfilePage = () => {
-  const { authUser } = useAuthStore();
+  const { authUser, setAuthUser } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
   const { mutate: updateProfile, isPending: isUpdatingProfile } =
     useUpdateProfile();
@@ -22,11 +23,16 @@ const ProfilePage = () => {
     }
 
     setSelectedImg(URL.createObjectURL(file));
-    updateProfile({ data: { file } });
+    updateProfile({ data: { file } }, {
+      onSuccess: (updatedUser) => {
+        setAuthUser(updatedUser);
+        setSelectedImg(null);
+      },
+    });
   };
 
   return (
-    <div className="h-screen pt-20">
+    <div className="min-h-screen pt-20">
       <div className="max-w-2xl mx-auto p-4 py-8">
         <div className="bg-base-300 rounded-xl p-6 space-y-8">
           <div className="text-center">
@@ -37,18 +43,20 @@ const ProfilePage = () => {
           {/* avatar upload section */}
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <img
-                src={selectedImg || authUser?.profilePic || "/avatar.png"}
-                alt="Profile"
-                className="size-32 rounded-full object-cover border-4 "
+              <Avatar
+                src={selectedImg || authUser?.profilePic}
+                name={authUser?.fullname ?? ""}
+                className="size-32 rounded-full border-4 text-5xl"
               />
               <label
                 htmlFor="avatar-upload"
-                className={`
-                  absolute bottom-0 right-0 bg-base-content hover:scale-105 p-2 rounded-full cursor-pointer transition-all duration-200 ${isUpdatingProfile ? "animate-pulse pointer-events-none" : ""}
-                `}
+                className={`absolute bottom-0 right-0 h-9 bg-base-content hover:scale-105 p-2 rounded-full cursor-pointer transition-all duration-200 ${isUpdatingProfile ? "pointer-events-none" : ""}`}
               >
-                <Camera className="w-5 h-5 text-base-200" />
+                {isUpdatingProfile ? (
+                  <span className="loading loading-spinner text-base-200 w-5 h-5" />
+                ) : (
+                  <Camera className="w-5 h-5 text-base-200" />
+                )}
                 <input
                   type="file"
                   id="avatar-upload"

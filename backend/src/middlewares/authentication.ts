@@ -1,8 +1,8 @@
+import type { UserResponseDto } from "@shared/types";
 import { Request } from "express";
 import jwt from "jsonwebtoken";
 
 import User from "@/models/user.model";
-import { UserResponseDto } from "@/models/user.response.dto";
 import { HttpStatus } from "@/types/HttpStatus";
 
 interface JwtPayload {
@@ -25,7 +25,7 @@ export class AuthenticationError extends Error {
 export async function expressAuthentication(
   request: Request,
   securityName: string,
-): Promise<Omit<UserResponseDto, "password">> {
+): Promise<UserResponseDto> {
   if (securityName === "jwt") {
     const token = request.cookies?.token;
 
